@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   Brain,
   TrendingUp,
@@ -8,6 +9,7 @@ import {
   Send,
 } from 'lucide-react'
 import Card from '../components/Card'
+import { sendResearchQuery } from '../utils/api'
 
 function PlaceholderBlock({ label, rows = 4 }) {
   return (
@@ -82,6 +84,29 @@ function FearGreedGauge() {
 }
 
 export default function Dashboard() {
+  const [query, setQuery] = useState('')
+  const [response, setResponse] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  async function handleSendQuery() {
+    const trimmed = query.trim()
+    if (!trimmed || loading) return
+
+    setLoading(true)
+    setError(null)
+    setResponse(null)
+
+    try {
+      const data = await sendResearchQuery(trimmed)
+      setResponse(data)
+    } catch (err) {
+      setError(err.message || 'Failed to reach AlphaLens backend')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Page header */}
@@ -116,20 +141,55 @@ export default function Dashboard() {
                 scenarios. Full AI integration ships in the next phase.
               </p>
             </div>
-            <div className="relative mt-auto">
-              <textarea
-                placeholder="e.g. Run a momentum factor backtest on US large-cap vs. current macro regime..."
-                rows={3}
-                className="w-full resize-none rounded-md border border-terminal-border bg-terminal-bg px-4 py-2.5 pr-12 font-mono text-sm text-terminal-text outline-none transition-colors placeholder:text-terminal-muted/60 focus:border-terminal-accent/50 focus:ring-1 focus:ring-terminal-accent/20"
-                readOnly
-              />
-              <button
-                type="button"
-                className="absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-md border border-terminal-accent/40 bg-terminal-accent/10 text-terminal-accent transition-colors hover:bg-terminal-accent/20"
-                aria-label="Send query"
-              >
-                <Send size={14} />
-              </button>
+            <div className="mt-auto space-y-3">
+              <div className="relative">
+                <textarea
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                      e.preventDefault()
+                      handleSendQuery()
+                    }
+                  }}
+                  placeholder="e.g. Run a momentum factor backtest on US large-cap vs. current macro regime..."
+                  rows={3}
+                  disabled={loading}
+                  className="w-full resize-none rounded-md border border-terminal-border bg-terminal-bg px-4 py-2.5 pr-12 font-mono text-sm text-terminal-text outline-none transition-colors placeholder:text-terminal-muted/60 focus:border-terminal-accent/50 focus:ring-1 focus:ring-terminal-accent/20 disabled:opacity-60"
+                />
+                <button
+                  type="button"
+                  onClick={handleSendQuery}
+                  disabled={loading || !query.trim()}
+                  className="absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-md border border-terminal-accent/40 bg-terminal-accent/10 text-terminal-accent transition-colors hover:bg-terminal-accent/20 disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Send query"
+                >
+                  <Send size={14} />
+                </button>
+              </div>
+
+              {loading && (
+                <p className="animate-pulse font-mono text-xs font-medium text-terminal-accent">
+                  AlphaLens is thinking...
+                </p>
+              )}
+
+              {error && !loading && (
+                <div className="rounded-md border border-red-500/30 bg-red-500/10 p-4 font-mono text-xs text-red-400">
+                  {error}
+                </div>
+              )}
+
+              {response && !loading && (
+                <div className="rounded-md border border-terminal-border bg-terminal-bg p-4">
+                  <p className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-wider text-terminal-accent">
+                    Research Response
+                  </p>
+                  <pre className="overflow-x-auto font-mono text-xs leading-relaxed text-terminal-text/90">
+                    {JSON.stringify(response, null, 2)}
+                  </pre>
+                </div>
+              )}
             </div>
           </div>
         </Card>

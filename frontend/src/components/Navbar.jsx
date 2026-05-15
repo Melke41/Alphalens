@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Search } from 'lucide-react'
+import { checkHealth } from '../utils/api'
 import { isMarketOpen } from '../utils/marketHours'
 
 function formatDateTime(date) {
@@ -24,6 +25,7 @@ function formatDateTime(date) {
 export default function Navbar() {
   const [now, setNow] = useState(() => new Date())
   const [marketOpen, setMarketOpen] = useState(() => isMarketOpen())
+  const [backendConnected, setBackendConnected] = useState(false)
 
   useEffect(() => {
     const tick = setInterval(() => {
@@ -32,6 +34,21 @@ export default function Navbar() {
       setMarketOpen(isMarketOpen(current))
     }, 1000)
     return () => clearInterval(tick)
+  }, [])
+
+  useEffect(() => {
+    async function pollHealth() {
+      try {
+        await checkHealth()
+        setBackendConnected(true)
+      } catch {
+        setBackendConnected(false)
+      }
+    }
+
+    pollHealth()
+    const interval = setInterval(pollHealth, 30000)
+    return () => clearInterval(interval)
   }, [])
 
   const { date, time } = formatDateTime(now)
@@ -69,6 +86,31 @@ export default function Navbar() {
         <kbd className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 rounded border border-terminal-border bg-terminal-elevated px-1.5 py-0.5 font-mono text-[10px] text-terminal-muted sm:inline">
           ⌘K
         </kbd>
+      </div>
+
+      {/* Backend connection */}
+      <div
+        className={`flex shrink-0 items-center gap-2 rounded-md border px-3 py-2 font-mono text-xs ${
+          backendConnected
+            ? 'border-terminal-accent/30 bg-terminal-accent/10 text-terminal-accent'
+            : 'border-red-500/30 bg-red-500/10 text-red-400'
+        }`}
+      >
+        <span className="relative flex h-2 w-2">
+          {backendConnected && (
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-terminal-accent opacity-60" />
+          )}
+          <span
+            className={`relative inline-flex h-2 w-2 rounded-full ${
+              backendConnected
+                ? 'bg-terminal-accent shadow-[0_0_8px_#3b82f6]'
+                : 'bg-red-400 shadow-[0_0_8px_#f87171]'
+            }`}
+          />
+        </span>
+        <span className="font-bold tracking-wider">
+          {backendConnected ? 'CONNECTED' : 'DISCONNECTED'}
+        </span>
       </div>
 
       {/* Market status */}
