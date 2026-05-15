@@ -1,19 +1,28 @@
-# 🔬 AlphaLens
-### AI-Powered Quantitative Research Platform
+# AlphaLens
 
-AlphaLens is an institutional-grade quant research platform that democratizes 
-the tools used by hedge funds like Citadel, Two Sigma, and DE Shaw.
+Institutional-grade AI-powered quantitative research platform.
 
-## Features
-- 🧠 Natural language → quant research reports
-- 📊 30+ institutional math calculations
-- 🌍 African & emerging market coverage
-- 📰 Real-time news sentiment analysis
-- 🏛️ Fed & macro intelligence dashboard
-- 📄 Goldman Sachs-style PDF research reports
+## Structure
 
-## Built With
-React • FastAPI • Python • Claude API • Plotly • FRED API
+- **frontend/** — React + Vite dashboard (charts, research UI)
+- **backend/** — FastAPI API (data, quant math, AI, reports)
 
-## Live Demo
-[Link here]
+## Quick start
+
+### Backend
+
+```bash
+cd backend
+python -m venv venv
+venv\Scripts\activate   # Windows
+pip install -r requirements.txt
+uvicorn main:app --reload
+```
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
