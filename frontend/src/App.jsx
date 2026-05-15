@@ -1,1 +1,23 @@
-// Root React application — routing, layout shell, and global state for the AlphaLens research dashboard
+import { Routes, Route } from 'react-router-dom'
+import Layout from './components/Layout'
+import Dashboard from './pages/Dashboard'
+import Research from './pages/Research'
+import Markets from './pages/Markets'
+import QuantTools from './pages/QuantTools'
+import MacroFed from './pages/MacroFed'
+import Reports from './pages/Reports'
+
+export default function App() {
+  return (
+    <Routes>
+      <Route element={<Layout />}>
+        <Route index element={<Dashboard />} />
+        <Route path="research" element={<Research />} />
+        <Route path="markets" element={<Markets />} />
+        <Route path="quant" element={<QuantTools />} />
+        <Route path="macro" element={<MacroFed />} />
+        <Route path="reports" element={<Reports />} />
+      </Route>
+    </Routes>
+  )
+}
