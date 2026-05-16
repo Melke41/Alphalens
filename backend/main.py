@@ -10,7 +10,7 @@ import os
 import re
 from typing import Any, Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -180,19 +180,56 @@ async def get_heatmap():
 
 
 @app.post("/calculate")
-def calculate(body: CalculateRequest) -> dict[str, Any]:
-    try:
-        return run_calculation(
-            body.type,
-            body.data,
-            data_y=body.data_y,
-            market_returns=body.market_returns,
-            risk_free=body.risk_free,
-            confidence=body.confidence,
-            from_prices=body.from_prices,
-        )
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+async def calculate(request: Request):
+    from modules.math_engine import (
+        calculate_returns, calculate_volatility, calculate_sharpe,
+        calculate_sortino, calculate_max_drawdown, calculate_var,
+        calculate_cvar, calculate_beta, calculate_alpha,
+        calculate_correlation, calculate_calmar, calculate_win_rate,
+        calculate_profit_factor, calculate_zscore
+    )
+    from modules.data_engine import fetch_market_data
+    
+    body = await request.json()
+    calc_type = body.get("type")
+    symbol = body.get("symbol", "SPY")
+    symbol2 = body.get("symbol2", "SPY")
+    period = body.get("period", "1y")
+    
+    market_data = fetch_market_data(symbol, period)
+    prices = market_data.get("close", [])
+    
+    if not prices:
+        return {"error": f"No data found for {symbol}"}
+    
+    returns = calculate_returns(prices)
+    
+    market_data2 = fetch_market_data(symbol2, period)
+    prices2 = market_data2.get("close", [])
+    returns2 = calculate_returns(prices2) if prices2 else returns
+    
+    return {
+        "symbol": symbol,
+        "period": period,
+        "latest_price": market_data.get("latest_price"),
+        "total_return": round(float((prices[-1] - prices[0]) / prices[0] * 100), 2),
+        "volatility": calculate_volatility(returns),
+        "sharpe_ratio": calculate_sharpe(returns),
+        "sortino_ratio": calculate_sortino(returns),
+        "max_drawdown": calculate_max_drawdown(prices),
+        "var_95": calculate_var(returns),
+        "cvar_95": calculate_cvar(returns),
+        "beta": calculate_beta(returns, returns2),
+        "alpha": calculate_alpha(returns, returns2),
+        "win_rate": calculate_win_rate(returns),
+        "profit_factor": calculate_profit_factor(returns),
+        "calmar_ratio": calculate_calmar(returns, prices),
+        "correlation": calculate_correlation(returns, returns2),
+        "zscore": calculate_zscore(prices),
+        "dates": market_data.get("dates", []),
+        "prices": prices,
+        "returns": [round(r, 6) for r in returns]
+    }
 
 
 @app.post("/macro")

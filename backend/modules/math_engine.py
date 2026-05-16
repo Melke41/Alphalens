@@ -117,3 +117,61 @@ def run_calculation(calc_type: str, data: list, **kwargs) -> dict:
         f"Unknown calculation type '{calc_type}'. "
         "Supported: returns, volatility, sharpe, max_drawdown, var, correlation, beta"
     )
+
+
+def calculate_sortino(returns: list, risk_free: float = 0.05) -> float:
+    import numpy as np
+    import pandas as pd
+    returns = pd.Series(returns)
+    excess = returns.mean() * 252 - risk_free
+    downside = returns[returns < 0].std() * np.sqrt(252)
+    return round(float(excess / downside) if downside != 0 else 0, 4)
+
+
+def calculate_cvar(returns: list, confidence: float = 0.95) -> float:
+    import numpy as np
+    import pandas as pd
+    returns = pd.Series(returns)
+    var = float(np.percentile(returns, (1 - confidence) * 100))
+    cvar = returns[returns <= var].mean()
+    return round(float(cvar), 4)
+
+
+def calculate_alpha(asset_returns: list, market_returns: list, risk_free: float = 0.05) -> float:
+    import pandas as pd
+    beta = calculate_beta(asset_returns, market_returns)
+    asset_annual = pd.Series(asset_returns).mean() * 252
+    market_annual = pd.Series(market_returns).mean() * 252
+    alpha = asset_annual - (risk_free + beta * (market_annual - risk_free))
+    return round(float(alpha), 4)
+
+
+def calculate_calmar(returns: list, prices: list) -> float:
+    import pandas as pd
+    annual_return = pd.Series(returns).mean() * 252
+    max_dd = abs(calculate_max_drawdown(prices))
+    return round(float(annual_return / max_dd) if max_dd != 0 else 0, 4)
+
+
+def calculate_win_rate(returns: list) -> float:
+    import pandas as pd
+    returns = pd.Series(returns)
+    return round(float((returns > 0).sum() / len(returns) * 100), 2)
+
+
+def calculate_profit_factor(returns: list) -> float:
+    import pandas as pd
+    returns = pd.Series(returns)
+    gross_profit = returns[returns > 0].sum()
+    gross_loss = abs(returns[returns < 0].sum())
+    return round(float(gross_profit / gross_loss) if gross_loss != 0 else 0, 4)
+
+
+def calculate_zscore(prices: list, window: int = 20) -> list:
+    import numpy as np
+    import pandas as pd
+    prices = pd.Series(prices)
+    rolling_mean = prices.rolling(window=window).mean()
+    rolling_std = prices.rolling(window=window).std()
+    zscore = (prices - rolling_mean) / rolling_std
+    return zscore.fillna(0).round(4).tolist()
