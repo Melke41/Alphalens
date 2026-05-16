@@ -16,6 +16,10 @@ import {
   getFearGreed,
   getTopMovers,
 } from '../utils/api'
+import FearGreedGauge from '../components/charts/FearGreedGauge'
+import HeatmapChart from '../components/charts/HeatmapChart'
+import PriceChart from '../components/charts/PriceChart'
+import ResearchChart from '../components/charts/ResearchChart'
 
 const REFRESH_MS = 60000
 
@@ -242,6 +246,9 @@ export default function Dashboard() {
   const [moversLoading, setMoversLoading] = useState(true)
   const [moversError, setMoversError] = useState(null)
 
+  const [researchedSymbol, setResearchedSymbol] = useState(null)
+  const [researchPriceData, setResearchPriceData] = useState(null)
+
   const loadQuotes = useCallback(async () => {
     setQuotesLoading(true)
     setQuotesError(null)
@@ -302,10 +309,25 @@ export default function Dashboard() {
     setLoading(true)
     setError(null)
     setResponse(null)
+    setResearchedSymbol(null)
+    setResearchPriceData(null)
 
     try {
       const data = await sendResearchQuery(trimmed)
       setResponse(data)
+      
+      // Extract symbol from response if available
+      if (data?.symbol) {
+        setResearchedSymbol(data.symbol)
+      }
+      
+      // Extract price data if available
+      if (data?.dates && data?.prices) {
+        setResearchPriceData({
+          dates: data.dates,
+          prices: data.prices,
+        })
+      }
     } catch (err) {
       console.error('[AlphaLens] sendResearchQuery failed:', err)
       setError(formatApiError(err))
@@ -399,6 +421,28 @@ export default function Dashboard() {
                   </pre>
                 </div>
               )}
+
+              {researchedSymbol && (
+                <div className="rounded-md border border-terminal-border bg-terminal-bg p-4">
+                  <p className="mb-3 font-mono text-[10px] font-semibold uppercase tracking-wider text-terminal-accent">
+                    Price Chart
+                  </p>
+                  <PriceChart symbol={researchedSymbol} period="1y" />
+                </div>
+              )}
+
+              {researchPriceData && researchedSymbol && (
+                <div className="rounded-md border border-terminal-border bg-terminal-bg p-4">
+                  <p className="mb-3 font-mono text-[10px] font-semibold uppercase tracking-wider text-terminal-accent">
+                    Research Chart
+                  </p>
+                  <ResearchChart
+                    dates={researchPriceData.dates}
+                    prices={researchPriceData.prices}
+                    symbol={researchedSymbol}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </Card>
@@ -414,11 +458,7 @@ export default function Dashboard() {
               MAJOR INDICES · FX · CRYPTO
             </span>
           </div>
-          <MarketOverviewContent
-            quotes={quotes}
-            loading={quotesLoading}
-            error={quotesError}
-          />
+          <HeatmapChart />
         </Card>
 
         <Card
@@ -429,11 +469,7 @@ export default function Dashboard() {
           <div className="mb-2 flex items-center gap-2">
             <Gauge className="h-4 w-4 text-terminal-accent" />
           </div>
-          <FearGreedContent
-            data={fearGreed}
-            loading={fearGreedLoading}
-            error={fearGreedError}
-          />
+          <FearGreedGauge />
         </Card>
 
         <Card
