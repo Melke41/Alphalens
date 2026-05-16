@@ -5,8 +5,6 @@ FRED API key required — add FRED_API_KEY to the backend/.env file.
 Register at: https://fred.stlouisfed.org/docs/api/api_key.html
 """
 
-from __future__ import annotations
-
 import os
 from typing import Any
 

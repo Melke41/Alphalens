@@ -11,6 +11,35 @@ import {
 import Card from '../components/Card'
 import { sendResearchQuery } from '../utils/api'
 
+function formatApiError(err) {
+  const parts = []
+
+  if (err?.message) parts.push(`Message: ${err.message}`)
+  if (err?.code) parts.push(`Code: ${err.code}`)
+  if (err?.name) parts.push(`Name: ${err.name}`)
+
+  if (err?.response) {
+    parts.push(`Status: ${err.response.status} ${err.response.statusText || ''}`.trim())
+    parts.push(
+      `Response: ${JSON.stringify(err.response.data, null, 2)}`,
+    )
+    parts.push(
+      `URL: ${err.config?.baseURL || ''}${err.config?.url || ''}`,
+    )
+  } else if (err?.request) {
+    parts.push(
+      'No response from server. Check that uvicorn is running at http://localhost:8000',
+    )
+    parts.push(
+      `Request URL: ${err.config?.baseURL || 'http://localhost:8000'}${err.config?.url || ''}`,
+    )
+  }
+
+  if (err?.stack) parts.push(`Stack:\n${err.stack}`)
+
+  return parts.length > 0 ? parts.join('\n\n') : String(err)
+}
+
 function PlaceholderBlock({ label, rows = 4 }) {
   return (
     <div className="flex flex-1 flex-col gap-2">
@@ -101,7 +130,8 @@ export default function Dashboard() {
       const data = await sendResearchQuery(trimmed)
       setResponse(data)
     } catch (err) {
-      setError(err.message || 'Failed to reach AlphaLens backend')
+      console.error('[AlphaLens] sendResearchQuery failed:', err)
+      setError(formatApiError(err))
     } finally {
       setLoading(false)
     }
@@ -175,8 +205,13 @@ export default function Dashboard() {
               )}
 
               {error && !loading && (
-                <div className="rounded-md border border-red-500/30 bg-red-500/10 p-4 font-mono text-xs text-red-400">
-                  {error}
+                <div className="rounded-md border border-red-500/30 bg-red-500/10 p-4">
+                  <p className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-wider text-red-400">
+                    Request Error
+                  </p>
+                  <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-red-400">
+                    {error}
+                  </pre>
                 </div>
               )}
 

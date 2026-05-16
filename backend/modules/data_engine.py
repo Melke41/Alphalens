@@ -1,7 +1,5 @@
 """Market data ingestion via yfinance."""
 
-from __future__ import annotations
-
 import yfinance as yf
 
 

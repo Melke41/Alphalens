@@ -1,7 +1,5 @@
 """Quantitative math engine — returns, risk, and factor statistics."""
 
-from __future__ import annotations
-
 import numpy as np
 from scipy import stats
 
