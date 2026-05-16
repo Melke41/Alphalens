@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Brain,
   TrendingUp,
@@ -7,9 +7,17 @@ import {
   AlertTriangle,
   FileText,
   Send,
+  Loader2,
 } from 'lucide-react'
 import Card from '../components/Card'
-import { sendResearchQuery } from '../utils/api'
+import {
+  sendResearchQuery,
+  getMarketQuotes,
+  getFearGreed,
+  getTopMovers,
+} from '../utils/api'
+
+const REFRESH_MS = 60000
 
 function formatApiError(err) {
   const parts = []
@@ -20,12 +28,8 @@ function formatApiError(err) {
 
   if (err?.response) {
     parts.push(`Status: ${err.response.status} ${err.response.statusText || ''}`.trim())
-    parts.push(
-      `Response: ${JSON.stringify(err.response.data, null, 2)}`,
-    )
-    parts.push(
-      `URL: ${err.config?.baseURL || ''}${err.config?.url || ''}`,
-    )
+    parts.push(`Response: ${JSON.stringify(err.response.data, null, 2)}`)
+    parts.push(`URL: ${err.config?.baseURL || ''}${err.config?.url || ''}`)
   } else if (err?.request) {
     parts.push(
       'No response from server. Check that uvicorn is running at http://localhost:8000',
@@ -38,6 +42,17 @@ function formatApiError(err) {
   if (err?.stack) parts.push(`Stack:\n${err.stack}`)
 
   return parts.length > 0 ? parts.join('\n\n') : String(err)
+}
+
+function LoadingSpinner({ label = 'Loading...' }) {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-3 py-8">
+      <Loader2 className="h-6 w-6 animate-spin text-terminal-accent" />
+      <p className="font-mono text-[10px] uppercase tracking-wider text-terminal-muted">
+        {label}
+      </p>
+    </div>
+  )
 }
 
 function PlaceholderBlock({ label, rows = 4 }) {
@@ -63,51 +78,148 @@ function PlaceholderBlock({ label, rows = 4 }) {
   )
 }
 
-function FearGreedGauge() {
+function MarketOverviewContent({ quotes, loading, error }) {
+  if (loading) return <LoadingSpinner label="Fetching quotes..." />
+  if (error) {
+    return (
+      <p className="font-mono text-xs text-red-400">{error}</p>
+    )
+  }
+  if (!quotes?.length) {
+    return (
+      <p className="font-mono text-xs text-terminal-muted">No quote data available</p>
+    )
+  }
+
   return (
-    <div className="flex flex-1 flex-col items-center justify-center py-4">
-      <div className="relative h-32 w-48">
-        <svg viewBox="0 0 200 110" className="h-full w-full" aria-hidden>
-          <defs>
-            <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#ef4444" />
-              <stop offset="50%" stopColor="#eab308" />
-              <stop offset="100%" stopColor="#3b82f6" />
-            </linearGradient>
-          </defs>
-          <path
-            d="M 20 100 A 80 80 0 0 1 180 100"
-            fill="none"
-            stroke="#1f1f1f"
-            strokeWidth="12"
-            strokeLinecap="round"
-          />
-          <path
-            d="M 20 100 A 80 80 0 0 1 180 100"
-            fill="none"
-            stroke="url(#gaugeGrad)"
-            strokeWidth="12"
-            strokeLinecap="round"
-            strokeDasharray="251"
-            strokeDashoffset="100"
-            opacity="0.6"
-          />
-          <line
-            x1="100"
-            y1="100"
-            x2="145"
-            y2="55"
-            stroke="#3b82f6"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-          <circle cx="100" cy="100" r="6" fill="#0a0a0a" stroke="#3b82f6" strokeWidth="2" />
-        </svg>
-      </div>
-      <p className="mt-2 font-mono text-2xl font-bold text-terminal-accent">—</p>
-      <p className="font-mono text-[10px] uppercase tracking-wider text-terminal-muted">
-        Index placeholder
+    <div className="flex flex-1 flex-col gap-1.5">
+      {quotes.map((q) => (
+        <div
+          key={q.symbol}
+          className="flex items-center justify-between rounded border border-terminal-border/60 bg-terminal-bg/50 px-3 py-2"
+        >
+          <span className="font-mono text-xs font-semibold text-terminal-text">
+            {q.symbol}
+          </span>
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-xs tabular-nums text-terminal-text">
+              {q.price?.toLocaleString?.() ?? q.price}
+            </span>
+            <span
+              className={`font-mono text-xs font-medium tabular-nums ${
+                q.positive ? 'text-green-400' : 'text-red-400'
+              }`}
+            >
+              {q.positive ? '+' : ''}
+              {q.change_pct}%
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function FearGreedContent({ data, loading, error }) {
+  if (loading) return <LoadingSpinner label="Calculating sentiment..." />
+  if (error) {
+    return <p className="font-mono text-xs text-red-400">{error}</p>
+  }
+
+  const score = data?.score ?? 50
+  const label = data?.label ?? 'Neutral'
+  const color = data?.color ?? '#eab308'
+
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center py-2">
+      <p
+        className="font-mono text-5xl font-bold tabular-nums"
+        style={{ color }}
+      >
+        {score}
       </p>
+      <p className="mt-1 font-mono text-sm font-semibold uppercase tracking-wider text-terminal-text">
+        {label}
+      </p>
+
+      {/* Arc-style gauge via filled bar */}
+      <div className="mt-6 w-full max-w-xs">
+        <div className="h-3 overflow-hidden rounded-full bg-terminal-border">
+          <div
+            className="h-full rounded-full transition-all duration-700"
+            style={{ width: `${score}%`, backgroundColor: color }}
+          />
+        </div>
+        <div className="mt-1 flex justify-between font-mono text-[9px] text-terminal-muted">
+          <span>FEAR</span>
+          <span>NEUTRAL</span>
+          <span>GREED</span>
+        </div>
+      </div>
+
+      {(data?.vix != null || data?.spy_return_3mo != null) && (
+        <div className="mt-4 flex gap-4 font-mono text-[10px] text-terminal-muted">
+          {data.vix != null && <span>VIX {data.vix}</span>}
+          {data.spy_return_3mo != null && (
+            <span>SPY 3M {data.spy_return_3mo > 0 ? '+' : ''}{data.spy_return_3mo}%</span>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function TopMoversContent({ movers, loading, error }) {
+  if (loading) return <LoadingSpinner label="Scanning movers..." />
+  if (error) {
+    return <p className="font-mono text-xs text-red-400">{error}</p>
+  }
+
+  const gainers = movers?.gainers ?? []
+  const losers = movers?.losers ?? []
+
+  const MoverRow = ({ item, positive }) => (
+    <div className="flex items-center justify-between rounded border border-terminal-border/60 bg-terminal-bg/50 px-3 py-2">
+      <span className="font-mono text-xs font-semibold text-terminal-text">
+        {item.symbol}
+      </span>
+      <span
+        className={`font-mono text-xs font-medium tabular-nums ${
+          positive ? 'text-green-400' : 'text-red-400'
+        }`}
+      >
+        {positive ? '+' : ''}
+        {item.change_pct}%
+      </span>
+    </div>
+  )
+
+  return (
+    <div className="flex flex-1 flex-col gap-4">
+      <div>
+        <p className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-wider text-green-400">
+          Top Gainers
+        </p>
+        <div className="space-y-1.5">
+          {gainers.length > 0 ? (
+            gainers.map((q) => <MoverRow key={q.symbol} item={q} positive />)
+          ) : (
+            <p className="font-mono text-[10px] text-terminal-muted">No gainers</p>
+          )}
+        </div>
+      </div>
+      <div>
+        <p className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-wider text-red-400">
+          Top Losers
+        </p>
+        <div className="space-y-1.5">
+          {losers.length > 0 ? (
+            losers.map((q) => <MoverRow key={q.symbol} item={q} positive={false} />)
+          ) : (
+            <p className="font-mono text-[10px] text-terminal-muted">No losers</p>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
@@ -117,6 +229,71 @@ export default function Dashboard() {
   const [response, setResponse] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+
+  const [quotes, setQuotes] = useState([])
+  const [quotesLoading, setQuotesLoading] = useState(true)
+  const [quotesError, setQuotesError] = useState(null)
+
+  const [fearGreed, setFearGreed] = useState(null)
+  const [fearGreedLoading, setFearGreedLoading] = useState(true)
+  const [fearGreedError, setFearGreedError] = useState(null)
+
+  const [movers, setMovers] = useState(null)
+  const [moversLoading, setMoversLoading] = useState(true)
+  const [moversError, setMoversError] = useState(null)
+
+  const loadQuotes = useCallback(async () => {
+    setQuotesLoading(true)
+    setQuotesError(null)
+    try {
+      const data = await getMarketQuotes()
+      setQuotes(data.quotes ?? [])
+    } catch (err) {
+      setQuotesError(err.message || 'Failed to load quotes')
+    } finally {
+      setQuotesLoading(false)
+    }
+  }, [])
+
+  const loadFearGreed = useCallback(async () => {
+    setFearGreedLoading(true)
+    setFearGreedError(null)
+    try {
+      const data = await getFearGreed()
+      setFearGreed(data)
+    } catch (err) {
+      setFearGreedError(err.message || 'Failed to load fear & greed')
+    } finally {
+      setFearGreedLoading(false)
+    }
+  }, [])
+
+  const loadMovers = useCallback(async () => {
+    setMoversLoading(true)
+    setMoversError(null)
+    try {
+      const data = await getTopMovers()
+      setMovers(data)
+    } catch (err) {
+      setMoversError(err.message || 'Failed to load movers')
+    } finally {
+      setMoversLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadQuotes()
+    loadFearGreed()
+    loadMovers()
+
+    const interval = setInterval(() => {
+      loadQuotes()
+      loadFearGreed()
+      loadMovers()
+    }, REFRESH_MS)
+
+    return () => clearInterval(interval)
+  }, [loadQuotes, loadFearGreed, loadMovers])
 
   async function handleSendQuery() {
     const trimmed = query.trim()
@@ -139,7 +316,6 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Page header */}
       <div className="flex items-end justify-between border-b border-terminal-border pb-4">
         <div>
           <p className="mb-1 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-terminal-muted">
@@ -150,13 +326,11 @@ export default function Dashboard() {
           </h1>
         </div>
         <p className="hidden font-mono text-xs text-terminal-muted sm:block">
-          INSTITUTIONAL QUANT RESEARCH · REAL-TIME SHELL
+          INSTITUTIONAL QUANT RESEARCH · LIVE MARKET DATA
         </p>
       </div>
 
-      {/* Grid */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-        {/* AI Copilot — wide */}
         <Card
           title="AI Research Copilot"
           subtitle="Natural language quant research"
@@ -168,7 +342,7 @@ export default function Dashboard() {
               <Brain className="mt-0.5 h-5 w-5 shrink-0 text-terminal-accent" />
               <p className="font-mono text-xs leading-relaxed text-terminal-muted">
                 Ask AlphaLens to analyze regimes, factor exposures, or macro
-                scenarios. Full AI integration ships in the next phase.
+                scenarios powered by Groq LLM and live market data.
               </p>
             </div>
             <div className="mt-auto space-y-3">
@@ -229,7 +403,6 @@ export default function Dashboard() {
           </div>
         </Card>
 
-        {/* Market overview */}
         <Card
           title="Market Overview"
           subtitle="Cross-asset snapshot"
@@ -238,13 +411,16 @@ export default function Dashboard() {
           <div className="mb-3 flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-terminal-accent" />
             <span className="font-mono text-[10px] text-terminal-muted">
-              MAJOR INDICES · FX · RATES
+              MAJOR INDICES · FX · CRYPTO
             </span>
           </div>
-          <PlaceholderBlock label="Live market data — coming soon" rows={5} />
+          <MarketOverviewContent
+            quotes={quotes}
+            loading={quotesLoading}
+            error={quotesError}
+          />
         </Card>
 
-        {/* Fear & Greed */}
         <Card
           title="Fear & Greed Index"
           subtitle="Sentiment gauge"
@@ -253,10 +429,13 @@ export default function Dashboard() {
           <div className="mb-2 flex items-center gap-2">
             <Gauge className="h-4 w-4 text-terminal-accent" />
           </div>
-          <FearGreedGauge />
+          <FearGreedContent
+            data={fearGreed}
+            loading={fearGreedLoading}
+            error={fearGreedError}
+          />
         </Card>
 
-        {/* Top movers */}
         <Card
           title="Top Movers"
           subtitle="Gainers & losers"
@@ -265,10 +444,13 @@ export default function Dashboard() {
           <div className="mb-3 flex items-center gap-2">
             <ArrowUpDown className="h-4 w-4 text-terminal-accent" />
           </div>
-          <PlaceholderBlock label="Equity movers — coming soon" />
+          <TopMoversContent
+            movers={movers}
+            loading={moversLoading}
+            error={moversError}
+          />
         </Card>
 
-        {/* Macro alerts */}
         <Card
           title="Macro Alerts"
           subtitle="Fed · CPI · yields"
@@ -283,7 +465,6 @@ export default function Dashboard() {
           <PlaceholderBlock label="Macro event feed — coming soon" rows={5} />
         </Card>
 
-        {/* Research reports */}
         <Card
           title="Latest Research Reports"
           subtitle="Institutional PDF outputs"

@@ -38,4 +38,24 @@ export const generateReport = async (analysis_id) => {
   return response.data;
 };
 
+export const getMarketQuotes = async () => {
+  const response = await api.get('/market/quotes');
+  return response.data;
+};
+
+export const getFearGreed = async () => {
+  const response = await api.get('/market/fear-greed');
+  return response.data;
+};
+
+export const getTopMovers = async () => {
+  const response = await api.get('/market/movers');
+  return response.data;
+};
+
+export const getHeatmap = async () => {
+  const response = await api.get('/market/heatmap');
+  return response.data;
+};
+
 export default api;

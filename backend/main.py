@@ -98,6 +98,8 @@ def research(body: ResearchRequest) -> dict[str, Any]:
 
     try:
         market = fetch_market_data(symbol, str(timeframe))
+        if "error" in market:
+            raise ValueError(market["error"])
         prices = market["close"]
         if len(prices) < 2:
             raise ValueError("Insufficient price history")
@@ -146,13 +148,35 @@ def research(body: ResearchRequest) -> dict[str, Any]:
 
 @app.post("/market-data")
 def market_data(body: MarketDataRequest) -> dict[str, Any]:
-    try:
-        data = fetch_market_data(body.symbol, body.period)
-        return {"data": data}
-    except ValueError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
-    except RuntimeError as exc:
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    data = fetch_market_data(body.symbol, body.period)
+    if "error" in data:
+        raise HTTPException(status_code=404, detail=data["error"])
+    return {"data": data}
+
+
+@app.get("/market/quotes")
+async def get_market_quotes():
+    symbols = ["SPY", "QQQ", "BTC-USD", "GLD", "^VIX", "AAPL", "NVDA", "TSLA"]
+    from modules.data_engine import fetch_multiple_quotes
+    return {"quotes": fetch_multiple_quotes(symbols)}
+
+
+@app.get("/market/fear-greed")
+async def get_fear_greed():
+    from modules.data_engine import fetch_fear_greed_index
+    return fetch_fear_greed_index()
+
+
+@app.get("/market/movers")
+async def get_top_movers():
+    from modules.data_engine import fetch_top_movers
+    return fetch_top_movers()
+
+
+@app.get("/market/heatmap")
+async def get_heatmap():
+    from modules.data_engine import fetch_global_heatmap
+    return fetch_global_heatmap()
 
 
 @app.post("/calculate")
