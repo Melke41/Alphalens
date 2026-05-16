@@ -239,6 +239,24 @@ def macro(body: MacroRequest) -> dict[str, Any]:
     return {"data": data}
 
 
+@app.get("/macro/dashboard")
+async def get_macro_dashboard():
+    from modules.macro_engine import fetch_macro_dashboard
+    return fetch_macro_dashboard()
+
+
+@app.get("/macro/yield-curve")
+async def get_yield_curve():
+    from modules.macro_engine import fetch_yield_curve
+    return fetch_yield_curve()
+
+
+@app.get("/macro/series/{series_id}")
+async def get_macro_series(series_id: str):
+    from modules.macro_engine import fetch_fred_series
+    return fetch_fred_series(series_id, 24)
+
+
 @app.post("/report")
 def report(body: ReportRequest) -> dict[str, Any]:
     return generate_report(body.analysis_id)
