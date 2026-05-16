@@ -252,6 +252,24 @@ async def get_macro_series(series_id: str):
     return fetch_fred_series(series_id, 24)
 
 
+@app.get("/african/markets")
+async def get_african_markets():
+    from modules.data_engine import fetch_african_markets
+    return fetch_african_markets()
+
+
+@app.get("/african/currencies")
+async def get_african_currencies():
+    from modules.data_engine import fetch_african_currencies
+    return fetch_african_currencies()
+
+
+@app.get("/african/macro")
+async def get_african_macro():
+    from modules.data_engine import fetch_african_macro
+    return fetch_african_macro()
+
+
 @app.post("/report/generate")
 async def generate_report(request: Request):
     from modules.report_engine import generate_research_report

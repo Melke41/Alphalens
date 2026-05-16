@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Search } from 'lucide-react'
-import { checkHealth } from '../utils/api'
+import { checkHealth, safeApiCall } from '../utils/api'
+import { REFRESH_INTERVAL_3MIN } from '../utils/refreshIntervals'
 import { isMarketOpen } from '../utils/marketHours'
 
 function formatDateTime(date) {
@@ -38,17 +39,13 @@ export default function Navbar() {
 
   useEffect(() => {
     async function pollHealth() {
-      try {
-        await checkHealth()
-        setBackendConnected(true)
-      } catch {
-        setBackendConnected(false)
-      }
+      const result = await safeApiCall(() => checkHealth())
+      setBackendConnected(Boolean(result))
     }
 
     pollHealth()
-    const interval = setInterval(pollHealth, 30000)
-    return () => clearInterval(interval)
+    const intervalId = setInterval(pollHealth, REFRESH_INTERVAL_3MIN)
+    return () => clearInterval(intervalId)
   }, [])
 
   const { date, time } = formatDateTime(now)

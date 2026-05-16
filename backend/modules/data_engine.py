@@ -147,3 +147,269 @@ def fetch_global_heatmap() -> list:
         return results
     except Exception as e:
         return []
+
+
+def fetch_african_markets() -> list:
+    try:
+        african_symbols = {
+            "Safaricom (Kenya)": "SCOM.NR",
+            "Dangote Cement (Nigeria)": "DANGCEM.LG",
+            "MTN Group (SA)": "MTN.JO",
+            "Naspers (SA)": "NPN.JO",
+            "Ethiopian Airlines": None,
+            "Equity Group (Kenya)": "EQTY.NR",
+            "Zenith Bank (Nigeria)": "ZENITHBA.LG",
+            "Standard Bank (SA)": "SBK.JO",
+        }
+
+        results = []
+        for name, symbol in african_symbols.items():
+            if symbol is None:
+                results.append({
+                    "name": name,
+                    "symbol": "N/A",
+                    "price": None,
+                    "change_pct": None,
+                    "available": False,
+                    "note": "Not publicly traded"
+                })
+                continue
+            try:
+                ticker = yf.Ticker(symbol)
+                hist = ticker.history(period="2d")
+                if not hist.empty:
+                    price = round(float(hist["Close"].iloc[-1]), 2)
+                    prev = round(float(hist["Close"].iloc[-2]), 2)
+                    change_pct = round((price - prev) / prev * 100, 2)
+                    results.append({
+                        "name": name,
+                        "symbol": symbol,
+                        "price": price,
+                        "change_pct": change_pct,
+                        "positive": change_pct >= 0,
+                        "available": True
+                    })
+                else:
+                    results.append({
+                        "name": name,
+                        "symbol": symbol,
+                        "price": None,
+                        "change_pct": None,
+                        "available": False,
+                        "note": "Data unavailable"
+                    })
+            except:
+                results.append({
+                    "name": name,
+                    "symbol": symbol,
+                    "price": None,
+                    "change_pct": None,
+                    "available": False,
+                    "note": "Data unavailable"
+                })
+        return results
+    except Exception as e:
+        return []
+
+
+def fetch_african_currencies() -> list:
+    try:
+        currencies = {
+            "Ethiopian Birr": "ETBUSD=X",
+            "Nigerian Naira": "NGNUSD=X",
+            "Kenyan Shilling": "KESUSD=X",
+            "South African Rand": "ZARUSD=X",
+            "Egyptian Pound": "EGPUSD=X",
+            "Ghanaian Cedi": "GHSUSD=X",
+        }
+        results = []
+        for name, symbol in currencies.items():
+            try:
+                ticker = yf.Ticker(symbol)
+                hist = ticker.history(period="2d")
+                if not hist.empty:
+                    price = round(float(hist["Close"].iloc[-1]), 6)
+                    prev = round(float(hist["Close"].iloc[-2]), 6)
+                    change_pct = round((price - prev) / prev * 100, 2)
+                    results.append({
+                        "name": name,
+                        "symbol": symbol,
+                        "usd_rate": price,
+                        "change_pct": change_pct,
+                        "positive": change_pct >= 0,
+                        "available": True
+                    })
+                else:
+                    results.append({
+                        "name": name,
+                        "symbol": symbol,
+                        "usd_rate": None,
+                        "change_pct": None,
+                        "available": False
+                    })
+            except:
+                results.append({
+                    "name": name,
+                    "symbol": symbol,
+                    "usd_rate": None,
+                    "change_pct": None,
+                    "available": False
+                })
+        return results
+    except Exception as e:
+        return []
+
+
+def fetch_african_macro() -> dict:
+    return {
+        "gdp_growth": {
+            "Ethiopia": 7.2,
+            "Nigeria": 2.9,
+            "Kenya": 5.1,
+            "South Africa": 0.6,
+            "Egypt": 4.2,
+            "Ghana": 3.8,
+        },
+        "inflation": {
+            "Ethiopia": 28.5,
+            "Nigeria": 29.9,
+            "Kenya": 6.3,
+            "South Africa": 5.3,
+            "Egypt": 35.7,
+            "Ghana": 23.1,
+        },
+        "source": "World Bank / IMF 2024 estimates"
+    }
+
+
+def fetch_african_markets() -> list:
+    try:
+        african_symbols = {
+            "Safaricom (Kenya)": "SCOM.NR",
+            "Dangote Cement (Nigeria)": "DANGCEM.LG",
+            "MTN Group (SA)": "MTN.JO",
+            "Naspers (SA)": "NPN.JO",
+            "Ethiopian Airlines": None,
+            "Equity Group (Kenya)": "EQTY.NR",
+            "Zenith Bank (Nigeria)": "ZENITHBA.LG",
+            "Standard Bank (SA)": "SBK.JO",
+        }
+
+        results = []
+        for name, symbol in african_symbols.items():
+            if symbol is None:
+                results.append({
+                    "name": name,
+                    "symbol": "N/A",
+                    "price": None,
+                    "change_pct": None,
+                    "available": False,
+                    "note": "Not publicly traded"
+                })
+                continue
+            try:
+                ticker = yf.Ticker(symbol)
+                hist = ticker.history(period="2d")
+                if not hist.empty:
+                    price = round(float(hist["Close"].iloc[-1]), 2)
+                    prev = round(float(hist["Close"].iloc[-2]), 2)
+                    change_pct = round((price - prev) / prev * 100, 2)
+                    results.append({
+                        "name": name,
+                        "symbol": symbol,
+                        "price": price,
+                        "change_pct": change_pct,
+                        "positive": change_pct >= 0,
+                        "available": True
+                    })
+                else:
+                    results.append({
+                        "name": name,
+                        "symbol": symbol,
+                        "price": None,
+                        "change_pct": None,
+                        "available": False,
+                        "note": "Data unavailable"
+                    })
+            except:
+                results.append({
+                    "name": name,
+                    "symbol": symbol,
+                    "price": None,
+                    "change_pct": None,
+                    "available": False,
+                    "note": "Data unavailable"
+                })
+        return results
+    except Exception as e:
+        return []
+
+
+def fetch_african_currencies() -> list:
+    try:
+        currencies = {
+            "Ethiopian Birr": "ETBUSD=X",
+            "Nigerian Naira": "NGNUSD=X",
+            "Kenyan Shilling": "KESUSD=X",
+            "South African Rand": "ZARUSD=X",
+            "Egyptian Pound": "EGPUSD=X",
+            "Ghanaian Cedi": "GHSUSD=X",
+        }
+        results = []
+        for name, symbol in currencies.items():
+            try:
+                ticker = yf.Ticker(symbol)
+                hist = ticker.history(period="2d")
+                if not hist.empty:
+                    price = round(float(hist["Close"].iloc[-1]), 6)
+                    prev = round(float(hist["Close"].iloc[-2]), 6)
+                    change_pct = round((price - prev) / prev * 100, 2)
+                    results.append({
+                        "name": name,
+                        "symbol": symbol,
+                        "usd_rate": price,
+                        "change_pct": change_pct,
+                        "positive": change_pct >= 0,
+                        "available": True
+                    })
+                else:
+                    results.append({
+                        "name": name,
+                        "symbol": symbol,
+                        "usd_rate": None,
+                        "change_pct": None,
+                        "available": False
+                    })
+            except:
+                results.append({
+                    "name": name,
+                    "symbol": symbol,
+                    "usd_rate": None,
+                    "change_pct": None,
+                    "available": False
+                })
+        return results
+    except Exception as e:
+        return []
+
+
+def fetch_african_macro() -> dict:
+    return {
+        "gdp_growth": {
+            "Ethiopia": 7.2,
+            "Nigeria": 2.9,
+            "Kenya": 5.1,
+            "South Africa": 0.6,
+            "Egypt": 4.2,
+            "Ghana": 3.8,
+        },
+        "inflation": {
+            "Ethiopia": 28.5,
+            "Nigeria": 29.9,
+            "Kenya": 6.3,
+            "South Africa": 5.3,
+            "Egypt": 35.7,
+            "Ghana": 23.1,
+        },
+        "source": "World Bank / IMF 2024 estimates"
+    }

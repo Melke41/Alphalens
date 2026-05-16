@@ -1,4 +1,9 @@
 import axios from 'axios';
+import {
+  isApiCooldown,
+  activateApiCooldown,
+  ApiCooldownError,
+} from './apiCooldown';
 
 const api = axios.create({
   baseURL: 'http://localhost:8000',
@@ -7,6 +12,37 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+api.interceptors.request.use((config) => {
+  if (isApiCooldown()) {
+    return Promise.reject(new ApiCooldownError());
+  }
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (!(error instanceof ApiCooldownError)) {
+      activateApiCooldown();
+    }
+    return Promise.reject(error);
+  },
+);
+
+export async function safeApiCall(fn) {
+  if (isApiCooldown()) {
+    return null;
+  }
+  try {
+    return await fn();
+  } catch (err) {
+    if (!(err instanceof ApiCooldownError)) {
+      activateApiCooldown();
+    }
+    return null;
+  }
+}
 
 export const checkHealth = async () => {
   const response = await api.get('/health');

@@ -3,9 +3,9 @@ import { LineChart, Search, TrendingUp, ArrowUpDown, Loader2 } from 'lucide-reac
 import Card from '../components/Card'
 import PriceChart from '../components/charts/PriceChart'
 import HeatmapChart from '../components/charts/HeatmapChart'
-import { getMarketQuotes, getTopMovers } from '../utils/api'
-
-const REFRESH_MS = 60000
+import { getMarketQuotes, getTopMovers, safeApiCall } from '../utils/api'
+import { ApiCooldownError } from '../utils/apiCooldown'
+import { REFRESH_INTERVAL_5MIN, delay } from '../utils/refreshIntervals'
 
 function TickerTape({ quotes }) {
   const tickerSymbols = ['SPY', 'QQQ', 'BTC-USD', 'GLD']
@@ -116,41 +116,34 @@ export default function Markets() {
   const [moversError, setMoversError] = useState(null)
 
   useEffect(() => {
-    const loadQuotes = async () => {
+    const loadMarketData = async () => {
       setQuotesLoading(true)
+      setMoversLoading(true)
       setQuotesError(null)
+      setMoversError(null)
+
       try {
-        const data = await getMarketQuotes()
-        setQuotes(data.quotes ?? [])
+        const quotesData = await safeApiCall(() => getMarketQuotes())
+        if (quotesData) setQuotes(quotesData.quotes ?? [])
+
+        await delay(2000)
+
+        const moversData = await safeApiCall(() => getTopMovers())
+        if (moversData) setMovers(moversData)
       } catch (err) {
-        setQuotesError(err.message || 'Failed to load quotes')
+        if (!(err instanceof ApiCooldownError)) {
+          setQuotesError(err.message || 'Failed to load market data')
+        }
       } finally {
         setQuotesLoading(false)
-      }
-    }
-
-    const loadMovers = async () => {
-      setMoversLoading(true)
-      setMoversError(null)
-      try {
-        const data = await getTopMovers()
-        setMovers(data)
-      } catch (err) {
-        setMoversError(err.message || 'Failed to load movers')
-      } finally {
         setMoversLoading(false)
       }
     }
 
-    loadQuotes()
-    loadMovers()
+    loadMarketData()
 
-    const interval = setInterval(() => {
-      loadQuotes()
-      loadMovers()
-    }, REFRESH_MS)
-
-    return () => clearInterval(interval)
+    const intervalId = setInterval(loadMarketData, REFRESH_INTERVAL_5MIN)
+    return () => clearInterval(intervalId)
   }, [])
 
   const handleSearch = (e) => {

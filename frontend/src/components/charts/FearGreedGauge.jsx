@@ -1,21 +1,30 @@
 import { useState, useEffect } from 'react'
 import Plot from 'react-plotly.js'
-import { getFearGreed } from '../../utils/api'
+import { getFearGreed, safeApiCall } from '../../utils/api'
+import { ApiCooldownError } from '../../utils/apiCooldown'
+import { REFRESH_INTERVAL_5MIN } from '../../utils/refreshIntervals'
 import { Loader2 } from 'lucide-react'
 
-export default function FearGreedGauge() {
+export default function FearGreedGauge({
+  data: externalData,
+  loading: externalLoading,
+  disablePolling = false,
+}) {
   const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!disablePolling)
   const [error, setError] = useState(null)
 
   useEffect(() => {
+    if (disablePolling) return
+
     const loadData = async () => {
       setLoading(true)
       setError(null)
       try {
-        const response = await getFearGreed()
-        setData(response)
+        const response = await safeApiCall(() => getFearGreed())
+        if (response) setData(response)
       } catch (err) {
+        if (err instanceof ApiCooldownError) return
         setError(err.message || 'Failed to fetch fear & greed data')
       } finally {
         setLoading(false)
@@ -24,11 +33,14 @@ export default function FearGreedGauge() {
 
     loadData()
 
-    const interval = setInterval(loadData, 60000)
-    return () => clearInterval(interval)
-  }, [])
+    const intervalId = setInterval(loadData, REFRESH_INTERVAL_5MIN)
+    return () => clearInterval(intervalId)
+  }, [disablePolling])
 
-  if (loading) {
+  const displayData = disablePolling ? externalData : data
+  const displayLoading = disablePolling ? externalLoading : loading
+
+  if (displayLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-terminal-accent" />
@@ -36,7 +48,7 @@ export default function FearGreedGauge() {
     )
   }
 
-  if (error) {
+  if (error && !disablePolling) {
     return (
       <div className="flex h-64 items-center justify-center">
         <p className="font-mono text-sm text-red-400">{error}</p>
@@ -44,22 +56,21 @@ export default function FearGreedGauge() {
     )
   }
 
-  const score = data?.score ?? 50
-  const label = data?.label ?? 'Neutral'
+  const score = displayData?.score ?? 50
 
-  const getLabel = (score) => {
-    if (score <= 25) return 'Extreme Fear'
-    if (score <= 45) return 'Fear'
-    if (score <= 55) return 'Neutral'
-    if (score <= 75) return 'Greed'
+  const getLabel = (value) => {
+    if (value <= 25) return 'Extreme Fear'
+    if (value <= 45) return 'Fear'
+    if (value <= 55) return 'Neutral'
+    if (value <= 75) return 'Greed'
     return 'Extreme Greed'
   }
 
-  const getColor = (score) => {
-    if (score <= 25) return '#ef4444'
-    if (score <= 45) return '#f97316'
-    if (score <= 55) return '#eab308'
-    if (score <= 75) return '#22c55e'
+  const getColor = (value) => {
+    if (value <= 25) return '#ef4444'
+    if (value <= 45) return '#f97316'
+    if (value <= 55) return '#eab308'
+    if (value <= 75) return '#22c55e'
     return '#3b82f6'
   }
 

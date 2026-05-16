@@ -15,13 +15,15 @@ import {
   getMarketQuotes,
   getFearGreed,
   getTopMovers,
+  getHeatmap,
+  safeApiCall,
 } from '../utils/api'
+import { ApiCooldownError } from '../utils/apiCooldown'
+import { REFRESH_INTERVAL_5MIN, delay } from '../utils/refreshIntervals'
 import FearGreedGauge from '../components/charts/FearGreedGauge'
 import HeatmapChart from '../components/charts/HeatmapChart'
 import PriceChart from '../components/charts/PriceChart'
 import ResearchChart from '../components/charts/ResearchChart'
-
-const REFRESH_MS = 60000
 
 function formatApiError(err) {
   const parts = []
@@ -246,61 +248,57 @@ export default function Dashboard() {
   const [moversLoading, setMoversLoading] = useState(true)
   const [moversError, setMoversError] = useState(null)
 
+  const [heatmap, setHeatmap] = useState([])
+  const [heatmapLoading, setHeatmapLoading] = useState(true)
+
   const [researchedSymbol, setResearchedSymbol] = useState(null)
   const [researchPriceData, setResearchPriceData] = useState(null)
 
-  const loadQuotes = useCallback(async () => {
+  const loadAllMarketData = useCallback(async () => {
     setQuotesLoading(true)
+    setFearGreedLoading(true)
+    setMoversLoading(true)
+    setHeatmapLoading(true)
     setQuotesError(null)
+    setFearGreedError(null)
+    setMoversError(null)
+
     try {
-      const data = await getMarketQuotes()
-      setQuotes(data.quotes ?? [])
+      const quotesData = await safeApiCall(() => getMarketQuotes())
+      if (quotesData) setQuotes(quotesData.quotes ?? [])
+
+      await delay(2000)
+
+      const fearData = await safeApiCall(() => getFearGreed())
+      if (fearData) setFearGreed(fearData)
+
+      await delay(2000)
+
+      const moversData = await safeApiCall(() => getTopMovers())
+      if (moversData) setMovers(moversData)
+
+      await delay(2000)
+
+      const heatmapData = await safeApiCall(() => getHeatmap())
+      if (heatmapData) setHeatmap(heatmapData)
     } catch (err) {
-      setQuotesError(err.message || 'Failed to load quotes')
+      if (!(err instanceof ApiCooldownError)) {
+        console.error('[AlphaLens] Dashboard market data load failed:', err)
+      }
     } finally {
       setQuotesLoading(false)
-    }
-  }, [])
-
-  const loadFearGreed = useCallback(async () => {
-    setFearGreedLoading(true)
-    setFearGreedError(null)
-    try {
-      const data = await getFearGreed()
-      setFearGreed(data)
-    } catch (err) {
-      setFearGreedError(err.message || 'Failed to load fear & greed')
-    } finally {
       setFearGreedLoading(false)
-    }
-  }, [])
-
-  const loadMovers = useCallback(async () => {
-    setMoversLoading(true)
-    setMoversError(null)
-    try {
-      const data = await getTopMovers()
-      setMovers(data)
-    } catch (err) {
-      setMoversError(err.message || 'Failed to load movers')
-    } finally {
       setMoversLoading(false)
+      setHeatmapLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    loadQuotes()
-    loadFearGreed()
-    loadMovers()
+    loadAllMarketData()
 
-    const interval = setInterval(() => {
-      loadQuotes()
-      loadFearGreed()
-      loadMovers()
-    }, REFRESH_MS)
-
-    return () => clearInterval(interval)
-  }, [loadQuotes, loadFearGreed, loadMovers])
+    const intervalId = setInterval(loadAllMarketData, REFRESH_INTERVAL_5MIN)
+    return () => clearInterval(intervalId)
+  }, [loadAllMarketData])
 
   async function handleSendQuery() {
     const trimmed = query.trim()
@@ -458,7 +456,7 @@ export default function Dashboard() {
               MAJOR INDICES · FX · CRYPTO
             </span>
           </div>
-          <HeatmapChart />
+          <HeatmapChart data={heatmap} loading={heatmapLoading} disablePolling />
         </Card>
 
         <Card
@@ -469,7 +467,7 @@ export default function Dashboard() {
           <div className="mb-2 flex items-center gap-2">
             <Gauge className="h-4 w-4 text-terminal-accent" />
           </div>
-          <FearGreedGauge />
+          <FearGreedGauge data={fearGreed} loading={fearGreedLoading} disablePolling />
         </Card>
 
         <Card

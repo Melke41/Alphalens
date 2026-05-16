@@ -14,6 +14,7 @@ const navItems = [
   { to: '/markets', label: 'Markets', icon: LineChart },
   { to: '/quant', label: 'Quant Tools', icon: Calculator },
   { to: '/macro', label: 'Macro & Fed', icon: Globe2 },
+  { to: '/african', label: 'African Markets', emoji: '🌍' },
   { to: '/reports', label: 'Reports', icon: FileText },
 ]
 
@@ -40,7 +41,7 @@ export default function Sidebar() {
         <p className="mb-3 px-3 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-terminal-muted">
           Navigation
         </p>
-        {navItems.map(({ to, label, icon: Icon, end }) => (
+        {navItems.map(({ to, label, icon: Icon, emoji, end }) => (
           <NavLink
             key={to}
             to={to}
@@ -55,15 +56,21 @@ export default function Sidebar() {
           >
             {({ isActive }) => (
               <>
-                <Icon
-                  size={18}
-                  className={
-                    isActive
-                      ? 'text-terminal-accent'
-                      : 'text-terminal-muted group-hover:text-terminal-text'
-                  }
-                  strokeWidth={isActive ? 2.25 : 1.75}
-                />
+                {emoji ? (
+                  <span className="text-base leading-none" aria-hidden>
+                    {emoji}
+                  </span>
+                ) : (
+                  <Icon
+                    size={18}
+                    className={
+                      isActive
+                        ? 'text-terminal-accent'
+                        : 'text-terminal-muted group-hover:text-terminal-text'
+                    }
+                    strokeWidth={isActive ? 2.25 : 1.75}
+                  />
+                )}
                 <span className="font-mono text-[13px] tracking-tight">{label}</span>
                 {isActive && (
                   <span className="ml-auto h-1.5 w-1.5 rounded-full bg-terminal-accent shadow-[0_0_8px_#3b82f6]" />

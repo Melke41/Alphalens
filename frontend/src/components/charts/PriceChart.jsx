@@ -1,15 +1,8 @@
 import { useState, useEffect } from 'react'
 import Plot from 'react-plotly.js'
-import axios from 'axios'
+import api, { safeApiCall } from '../../utils/api'
+import { ApiCooldownError } from '../../utils/apiCooldown'
 import { Loader2 } from 'lucide-react'
-
-const api = axios.create({
-  baseURL: 'http://localhost:8000',
-  timeout: 30000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-})
 
 export default function PriceChart({ symbol, period = '1y' }) {
   const [data, setData] = useState(null)
@@ -30,16 +23,16 @@ export default function PriceChart({ symbol, period = '1y' }) {
       setLoading(true)
       setError(null)
       try {
-        const response = await api.post('/market-data', {
-          symbol: symbol,
-          period: selectedPeriod.toLowerCase()
-        })
-        console.log("Price data:", response.data)
-        setData(response.data.data)
+        const response = await safeApiCall(() =>
+          api.post('/market-data', {
+            symbol: symbol,
+            period: selectedPeriod.toLowerCase(),
+          }),
+        )
+        if (response) setData(response.data.data)
       } catch (err) {
-        console.error("Error fetching market data:", err)
-        const errorMessage = err.response?.data?.detail || err.message || 'Failed to fetch market data'
-        setError(errorMessage)
+        if (err instanceof ApiCooldownError) return
+        setError(err.response?.data?.detail || err.message || 'Failed to fetch market data')
       } finally {
         setLoading(false)
       }

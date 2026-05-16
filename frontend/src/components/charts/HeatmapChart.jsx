@@ -1,32 +1,30 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import { getHeatmap, safeApiCall } from '../../utils/api'
+import { ApiCooldownError } from '../../utils/apiCooldown'
+import { REFRESH_INTERVAL_5MIN } from '../../utils/refreshIntervals'
 import { Loader2 } from 'lucide-react'
 
-const api = axios.create({
-  baseURL: 'http://localhost:8000',
-  timeout: 30000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-})
-
-export default function HeatmapChart() {
+export default function HeatmapChart({
+  data: externalData,
+  loading: externalLoading,
+  disablePolling = false,
+}) {
   const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!disablePolling)
   const [error, setError] = useState(null)
 
   useEffect(() => {
+    if (disablePolling) return
+
     const loadData = async () => {
       setLoading(true)
       setError(null)
       try {
-        const response = await api.get('/market/heatmap')
-        console.log("Heatmap data:", response.data)
-        setData(response.data)
+        const response = await safeApiCall(() => getHeatmap())
+        if (response) setData(response)
       } catch (err) {
-        console.error("Error fetching heatmap data:", err)
-        const errorMessage = err.response?.data?.detail || err.message || 'Failed to fetch heatmap data'
-        setError(errorMessage)
+        if (err instanceof ApiCooldownError) return
+        setError(err.message || 'Failed to fetch heatmap data')
       } finally {
         setLoading(false)
       }
@@ -34,9 +32,12 @@ export default function HeatmapChart() {
 
     loadData()
 
-    const interval = setInterval(loadData, 60000)
-    return () => clearInterval(interval)
-  }, [])
+    const intervalId = setInterval(loadData, REFRESH_INTERVAL_5MIN)
+    return () => clearInterval(intervalId)
+  }, [disablePolling])
+
+  const displayData = disablePolling ? externalData : data
+  const displayLoading = disablePolling ? externalLoading : loading
 
   const getColor = (positive) => {
     return positive ? '#22c55e' : '#ef4444'
@@ -50,7 +51,7 @@ export default function HeatmapChart() {
     return Math.min(size, maxSize)
   }
 
-  if (loading) {
+  if (displayLoading) {
     return (
       <div className="flex h-96 items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-terminal-accent" />
@@ -58,7 +59,7 @@ export default function HeatmapChart() {
     )
   }
 
-  if (error) {
+  if (error && !disablePolling) {
     return (
       <div className="flex h-96 items-center justify-center">
         <p className="font-mono text-sm text-red-400">{error}</p>
@@ -66,7 +67,7 @@ export default function HeatmapChart() {
     )
   }
 
-  if (!data || !Array.isArray(data) || !data.length) {
+  if (!displayData || !Array.isArray(displayData) || !displayData.length) {
     return (
       <div className="flex h-96 items-center justify-center">
         <p className="font-mono text-sm text-terminal-muted">No heatmap data available</p>
@@ -76,7 +77,7 @@ export default function HeatmapChart() {
 
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-      {data.map((market) => (
+      {displayData.map((market) => (
         <div
           key={market.symbol}
           className="group relative flex flex-col items-center justify-center rounded-lg border border-terminal-border/60 bg-terminal-bg/50 p-3 transition-all hover:border-terminal-accent/40 hover:scale-105"
@@ -99,7 +100,7 @@ export default function HeatmapChart() {
             {market.change_pct >= 0 ? '+' : ''}
             {market.change_pct.toFixed(2)}%
           </span>
-          
+
           <div className="absolute inset-0 flex flex-col items-center justify-center rounded-lg bg-terminal-bg/95 opacity-0 transition-opacity group-hover:opacity-100">
             <span className="font-mono text-xs font-semibold text-terminal-text">
               {market.name || market.symbol}
