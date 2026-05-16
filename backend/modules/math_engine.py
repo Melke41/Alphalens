@@ -1,119 +1,118 @@
-"""Quantitative math engine — returns, risk, and factor statistics."""
-
 import numpy as np
+import pandas as pd
 from scipy import stats
 
-TRADING_DAYS = 252
-
-
-def calculate_returns(prices: list) -> list[float]:
-    """Simple percentage returns from a price series."""
-    arr = np.asarray(prices, dtype=float)
-    if arr.size < 2:
-        return []
-    returns = np.diff(arr) / arr[:-1]
+def calculate_returns(prices: list) -> list:
+    prices = pd.Series(prices)
+    returns = prices.pct_change().dropna()
     return returns.tolist()
 
+def calculate_log_returns(prices: list) -> list:
+    prices = pd.Series(prices)
+    log_returns = np.log(prices / prices.shift(1)).dropna()
+    return log_returns.tolist()
 
 def calculate_volatility(returns: list) -> float:
-    """Annualized volatility (sample std × √252)."""
-    arr = np.asarray(returns, dtype=float)
-    if arr.size < 2:
-        return 0.0
-    return float(arr.std(ddof=1) * np.sqrt(TRADING_DAYS))
-
+    returns = pd.Series(returns)
+    return round(float(returns.std() * np.sqrt(252)), 4)
 
 def calculate_sharpe(returns: list, risk_free: float = 0.05) -> float:
-    """Annualized Sharpe ratio using daily returns."""
-    arr = np.asarray(returns, dtype=float)
-    if arr.size < 2:
-        return 0.0
-    ann_return = float(arr.mean() * TRADING_DAYS)
-    ann_vol = float(arr.std(ddof=1) * np.sqrt(TRADING_DAYS))
-    if ann_vol == 0:
-        return 0.0
-    return (ann_return - risk_free) / ann_vol
+    returns = pd.Series(returns)
+    excess = returns.mean() * 252 - risk_free
+    vol = returns.std() * np.sqrt(252)
+    return round(float(excess / vol) if vol != 0 else 0, 4)
 
+def calculate_sortino(returns: list, risk_free: float = 0.05) -> float:
+    returns = pd.Series(returns)
+    excess = returns.mean() * 252 - risk_free
+    downside = returns[returns < 0].std() * np.sqrt(252)
+    return round(float(excess / downside) if downside != 0 else 0, 4)
 
 def calculate_max_drawdown(prices: list) -> float:
-    """Maximum drawdown as a negative fraction (e.g. -0.25 = -25%)."""
-    arr = np.asarray(prices, dtype=float)
-    if arr.size < 2:
-        return 0.0
-    running_peak = np.maximum.accumulate(arr)
-    drawdowns = (arr - running_peak) / running_peak
-    return float(drawdowns.min())
-
+    prices = pd.Series(prices)
+    peak = prices.expanding().max()
+    drawdown = (prices - peak) / peak
+    return round(float(drawdown.min()), 4)
 
 def calculate_var(returns: list, confidence: float = 0.95) -> float:
-    """Historical Value at Risk at the given confidence level."""
-    arr = np.asarray(returns, dtype=float)
-    if arr.size == 0:
-        return 0.0
-    percentile = (1.0 - confidence) * 100.0
-    return float(np.percentile(arr, percentile))
+    returns = pd.Series(returns)
+    return round(float(np.percentile(returns, (1 - confidence) * 100)), 4)
 
-
-def calculate_correlation(x: list, y: list) -> dict:
-    """Pearson correlation and two-tailed p-value."""
-    x_arr = np.asarray(x, dtype=float)
-    y_arr = np.asarray(y, dtype=float)
-    if x_arr.size < 2 or y_arr.size < 2 or x_arr.size != y_arr.size:
-        return {"correlation": 0.0, "p_value": 1.0}
-    r, p_value = stats.pearsonr(x_arr, y_arr)
-    return {"correlation": float(r), "p_value": float(p_value)}
-
+def calculate_cvar(returns: list, confidence: float = 0.95) -> float:
+    returns = pd.Series(returns)
+    var = calculate_var(returns.tolist(), confidence)
+    cvar = returns[returns <= var].mean()
+    return round(float(cvar), 4)
 
 def calculate_beta(asset_returns: list, market_returns: list) -> float:
-    """CAPM beta = Cov(asset, market) / Var(market)."""
-    asset = np.asarray(asset_returns, dtype=float)
-    market = np.asarray(market_returns, dtype=float)
-    if asset.size < 2 or market.size < 2 or asset.size != market.size:
-        return 0.0
-    covariance = np.cov(asset, market, ddof=1)
-    market_variance = covariance[1, 1]
-    if market_variance == 0:
-        return 0.0
-    return float(covariance[0, 1] / market_variance)
+    asset = pd.Series(asset_returns)
+    market = pd.Series(market_returns)
+    min_len = min(len(asset), len(market))
+    asset = asset[:min_len]
+    market = market[:min_len]
+    covariance = np.cov(asset, market)[0][1]
+    market_variance = np.var(market)
+    return round(float(covariance / market_variance) if market_variance != 0 else 1, 4)
 
+def calculate_alpha(asset_returns: list, market_returns: list, risk_free: float = 0.05) -> float:
+    beta = calculate_beta(asset_returns, market_returns)
+    asset_annual = pd.Series(asset_returns).mean() * 252
+    market_annual = pd.Series(market_returns).mean() * 252
+    alpha = asset_annual - (risk_free + beta * (market_annual - risk_free))
+    return round(float(alpha), 4)
 
-def run_calculation(calc_type: str, data: list, **kwargs) -> dict:
-    """Dispatch a calculation by type name."""
-    calc_type = calc_type.lower().strip()
-
-    if calc_type == "returns":
-        return {"result": calculate_returns(data)}
-
-    if calc_type == "volatility":
-        returns = data if kwargs.get("from_prices") is False else calculate_returns(data)
-        return {"result": calculate_volatility(returns)}
-
-    if calc_type == "sharpe":
-        returns = data if kwargs.get("from_prices") is False else calculate_returns(data)
-        risk_free = float(kwargs.get("risk_free", 0.05))
-        return {"result": calculate_sharpe(returns, risk_free=risk_free)}
-
-    if calc_type == "max_drawdown":
-        return {"result": calculate_max_drawdown(data)}
-
-    if calc_type == "var":
-        confidence = float(kwargs.get("confidence", 0.95))
-        returns = data if kwargs.get("from_prices") is False else calculate_returns(data)
-        return {"result": calculate_var(returns, confidence=confidence)}
-
-    if calc_type == "correlation":
-        y = kwargs.get("data_y") or []
-        return {"result": calculate_correlation(data, y)}
-
-    if calc_type == "beta":
-        market = kwargs.get("market_returns") or []
-        asset_returns = data if kwargs.get("from_prices") is False else calculate_returns(data)
-        market_returns = (
-            market if kwargs.get("market_from_prices") is False else calculate_returns(market)
+def calculate_correlation(x: list, y: list) -> dict:
+    min_len = min(len(x), len(y))
+    x = pd.Series(x[:min_len])
+    y = pd.Series(y[:min_len])
+    corr, pvalue = stats.pearsonr(x, y)
+    return {
+        "correlation": round(float(corr), 4),
+        "p_value": round(float(pvalue), 4),
+        "significant": bool(pvalue < 0.05),
+        "interpretation": (
+            "Strong positive" if corr > 0.7 else
+            "Moderate positive" if corr > 0.3 else
+            "Weak positive" if corr > 0 else
+            "Weak negative" if corr > -0.3 else
+            "Moderate negative" if corr > -0.7 else
+            "Strong negative"
         )
-        return {"result": calculate_beta(asset_returns, market_returns)}
+    }
 
-    raise ValueError(
-        f"Unknown calculation type '{calc_type}'. "
-        "Supported: returns, volatility, sharpe, max_drawdown, var, correlation, beta"
-    )
+def calculate_calmar(returns: list, prices: list) -> float:
+    annual_return = pd.Series(returns).mean() * 252
+    max_dd = abs(calculate_max_drawdown(prices))
+    return round(float(annual_return / max_dd) if max_dd != 0 else 0, 4)
+
+def calculate_win_rate(returns: list) -> float:
+    returns = pd.Series(returns)
+    return round(float((returns > 0).sum() / len(returns) * 100), 2)
+
+def calculate_profit_factor(returns: list) -> float:
+    returns = pd.Series(returns)
+    gross_profit = returns[returns > 0].sum()
+    gross_loss = abs(returns[returns < 0].sum())
+    return round(float(gross_profit / gross_loss) if gross_loss != 0 else 0, 4)
+
+def calculate_zscore(prices: list, window: int = 20) -> list:
+    prices = pd.Series(prices)
+    rolling_mean = prices.rolling(window=window).mean()
+    rolling_std = prices.rolling(window=window).std()
+    zscore = (prices - rolling_mean) / rolling_std
+    return zscore.fillna(0).round(4).tolist()
+
+def run_backtest(prices: list, signals: list) -> dict:
+    prices = pd.Series(prices)
+    returns = prices.pct_change().fillna(0)
+    signals = pd.Series(signals[:len(returns)])
+    strategy_returns = returns * signals.shift(1).fillna(0)
+    cumulative = (1 + strategy_returns).cumprod()
+    return {
+        "equity_curve": cumulative.round(4).tolist(),
+        "total_return": round(float(cumulative.iloc[-1] - 1) * 100, 2),
+        "sharpe": calculate_sharpe(strategy_returns.tolist()),
+        "max_drawdown": calculate_max_drawdown(cumulative.tolist()),
+        "win_rate": calculate_win_rate(strategy_returns.tolist()),
+        "profit_factor": calculate_profit_factor(strategy_returns.tolist())
+    }

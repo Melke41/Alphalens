@@ -28,6 +28,16 @@ export const runCalculation = async (type, data) => {
   return response.data;
 };
 
+export const runFullAnalysis = async (symbol, symbol2, period) => {
+  const response = await api.post('/calculate', {
+    type: 'full_analysis',
+    symbol,
+    symbol2,
+    period,
+  });
+  return response.data;
+};
+
 export const fetchMacroData = async (indicator) => {
   const response = await api.post('/macro', { indicator });
   return response.data;
