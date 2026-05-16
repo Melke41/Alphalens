@@ -8,6 +8,7 @@ load_dotenv()
 
 import os
 import re
+from datetime import datetime
 from typing import Any, Optional
 
 from fastapi import FastAPI, Request, HTTPException
@@ -24,8 +25,6 @@ from modules.math_engine import (
     calculate_volatility,
     run_calculation,
 )
-from modules.report_engine import generate_report
-
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
 app = FastAPI(
@@ -67,10 +66,6 @@ class CalculateRequest(BaseModel):
 
 class MacroRequest(BaseModel):
     indicator: str = Field(default="CPI", examples=["CPI", "GDP", "UNRATE"])
-
-
-class ReportRequest(BaseModel):
-    analysis_id: str = Field(default="123")
 
 
 # --- Routes ---
@@ -257,6 +252,9 @@ async def get_macro_series(series_id: str):
     return fetch_fred_series(series_id, 24)
 
 
-@app.post("/report")
-def report(body: ReportRequest) -> dict[str, Any]:
-    return generate_report(body.analysis_id)
+@app.post("/report/generate")
+async def generate_report(request: Request):
+    from modules.report_engine import generate_research_report
+    body = await request.json()
+    pdf_base64 = generate_research_report(body)
+    return {"pdf": pdf_base64, "filename": f"AlphaLens_{body.get('symbol', 'Report')}_{datetime.now().strftime('%Y%m%d')}.pdf"}

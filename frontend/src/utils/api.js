@@ -33,8 +33,8 @@ export const fetchMacroData = async (indicator) => {
   return response.data;
 };
 
-export const generateReport = async (analysis_id) => {
-  const response = await api.post('/report', { analysis_id });
+export const generatePdfReport = async (reportData) => {
+  const response = await api.post('/report/generate', reportData);
   return response.data;
 };
 
