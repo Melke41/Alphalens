@@ -276,3 +276,9 @@ async def generate_report(request: Request):
     body = await request.json()
     pdf_base64 = generate_research_report(body)
     return {"pdf": pdf_base64, "filename": f"AlphaLens_{body.get('symbol', 'Report')}_{datetime.now().strftime('%Y%m%d')}.pdf"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
