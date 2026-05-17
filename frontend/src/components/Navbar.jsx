@@ -12,14 +12,14 @@ function formatDateTime(date) {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
-      timeZone: 'America/New_York',
+      timeZone: 'Africa/Addis_Ababa',
     }),
     time: date.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
       hour12: false,
-      timeZone: 'America/New_York',
+      timeZone: 'Africa/Addis_Ababa',
     }),
   }
 }
@@ -61,7 +61,7 @@ export default function Navbar() {
         </div>
         <div className="h-8 w-px bg-terminal-border" />
         <div>
-          <p className="text-terminal-muted">ET</p>
+          <p className="text-terminal-muted">EAT</p>
           <p className="text-lg font-semibold tabular-nums tracking-wider text-terminal-accent">
             {time}
           </p>
