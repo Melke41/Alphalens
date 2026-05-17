@@ -16,7 +16,7 @@ const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/research', label: 'Research', icon: Brain },
   { to: '/markets', label: 'Markets', icon: LineChart },
-  { to: '/market-intelligence', label: 'Market Intel', icon: Radio },
+  { to: '/market-intelligence', label: 'Market Intelligence', icon: Radio },
   { to: '/quant', label: 'Quant Tools', icon: Calculator },
   { to: '/macro', label: 'Macro & Fed', icon: Globe2 },
   { to: '/african', label: 'African Markets', emoji: '🌍' },
