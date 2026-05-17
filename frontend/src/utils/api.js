@@ -99,9 +99,9 @@ export const getMacroDashboard = async () => {
   return response.data;
 };
 
-export default api;
-
 export const getMarketNews = async () => {
   const response = await api.get('/news/market');
   return response.data;
 };
+
+export default api;
