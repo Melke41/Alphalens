@@ -156,8 +156,8 @@ export default function MarketIntelligence() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white p-6 md:p-10 font-mono space-y-8 pb-24">
-      <header className="border-b border-[#1f2937] pb-6">
+    <div className="min-h-screen bg-terminal-bg text-terminal-text p-6 md:p-10 font-mono space-y-8 pb-24">
+      <header className="border-b border-terminal-border pb-6">
         <div className="flex items-center gap-3 mb-2">
           <Radio className="h-4 w-4 text-terminal-accent live-indicator-pulse" />
           <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-terminal-muted">
@@ -174,10 +174,10 @@ export default function MarketIntelligence() {
 
       {/* Section 1: Economic Event Calendar */}
       <FadeCard index={0}>
-        <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-6">
+        <div className="bg-terminal-surface border border-terminal-border rounded-xl p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-white mb-1">Economic Calendar</h2>
+              <h2 className="text-2xl font-bold text-terminal-text mb-1">Economic Calendar</h2>
               <p className="text-sm text-[#6b7280]">Upcoming market-moving events</p>
             </div>
             <Calendar className="h-6 w-6 text-terminal-accent" />
@@ -190,8 +190,8 @@ export default function MarketIntelligence() {
                 onClick={() => setEventFilter(filter)}
                 className={`px-3 py-1.5 rounded border text-xs font-semibold uppercase transition-colors ${
                   eventFilter === filter
-                    ? 'bg-[#3b82f6] border-[#3b82f6] text-white'
-                    : 'bg-[#0a0a0a] border-[#1f2937] text-[#6b7280] hover:border-[#3b82f6]/50'
+                    ? 'bg-[#3b82f6] border-[#3b82f6] text-terminal-text'
+                    : 'bg-terminal-bg border-terminal-border text-[#6b7280] hover:border-[#3b82f6]/50'
                 }`}
               >
                 {filter}
@@ -206,7 +206,7 @@ export default function MarketIntelligence() {
               return (
                 <div
                   key={idx}
-                  className="bg-[#0a0a0a] border border-[#1f2937] rounded-lg p-4 hover:border-[#3b82f6]/50 transition-colors"
+                  className="bg-terminal-bg border border-terminal-border rounded-lg p-4 hover:border-[#3b82f6]/50 transition-colors"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
@@ -224,7 +224,7 @@ export default function MarketIntelligence() {
                   </div>
                   <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="text-sm font-semibold text-white mb-1">{event.event}</h3>
+                      <h3 className="text-sm font-semibold text-terminal-text mb-1">{event.event}</h3>
                       <p className="text-xs text-[#6b7280]">{event.description}</p>
                     </div>
                     <span className="text-xs text-[#6b7280] whitespace-nowrap ml-4">{event.date}</span>
@@ -238,10 +238,10 @@ export default function MarketIntelligence() {
 
       {/* Section 2: Daily Market News */}
       <FadeCard index={1}>
-        <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-6">
+        <div className="bg-terminal-surface border border-terminal-border rounded-xl p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-white mb-1">Today's Market Intelligence</h2>
+              <h2 className="text-2xl font-bold text-terminal-text mb-1">Today's Market Intelligence</h2>
               <p className="text-sm text-[#6b7280]">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
             <Newspaper className="h-6 w-6 text-terminal-accent" />
@@ -257,7 +257,7 @@ export default function MarketIntelligence() {
               {news.map((item) => (
                 <div
                   key={item.id}
-                  className={`bg-[#0a0a0a] border-l-4 rounded-lg p-5 hover:shadow-lg hover:shadow-${item.color}-500/10 transition-all ${
+                  className={`bg-terminal-bg border-l-4 rounded-lg p-5 hover:shadow-lg transition-all ${
                     item.sentiment === 'bullish' ? 'border-l-green-500' : 
                     item.sentiment === 'bearish' ? 'border-l-red-500' : 'border-l-blue-500'
                   }`}
@@ -290,19 +290,19 @@ export default function MarketIntelligence() {
                           {item.category}
                         </span>
                       </div>
-                      <h3 className="text-base font-bold text-white mb-2">{item.title}</h3>
+                      <h3 className="text-base font-bold text-terminal-text mb-2">{item.title}</h3>
                       <p className="text-sm text-[#d1d5db] mb-3">{item.summary}</p>
                       <div className="flex items-center gap-2 mb-3 flex-wrap">
                         <span className="text-[10px] text-[#6b7280]">Assets Affected:</span>
                         {item.assets_affected.map(asset => (
-                          <span key={asset} className="px-2 py-0.5 bg-[#1f2937] rounded text-[10px] text-[#d1d5db] font-mono">
+                          <span key={asset} className="px-2 py-0.5 bg-terminal-border rounded text-[10px] text-[#d1d5db] font-mono">
                             {asset}
                           </span>
                         ))}
                       </div>
                       <button
                         onClick={() => analyzeWithAI(item.title, item.assets_affected[0])}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-[#3b82f6] hover:bg-blue-700 rounded-lg font-semibold text-white transition-colors text-xs"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-[#3b82f6] hover:bg-blue-700 rounded-lg font-semibold text-terminal-text transition-colors text-xs"
                       >
                         <Globe className="h-3 w-3" />
                         Analyze with AI
@@ -319,10 +319,10 @@ export default function MarketIntelligence() {
 
       {/* Section 3: Weekly Market Summary */}
       <FadeCard index={2}>
-        <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-6">
+        <div className="bg-terminal-surface border border-terminal-border rounded-xl p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-white mb-1">This Week in Markets</h2>
+              <h2 className="text-2xl font-bold text-terminal-text mb-1">This Week in Markets</h2>
               <p className="text-sm text-[#6b7280]">Weekly briefing and key takeaways</p>
             </div>
             <BarChart3 className="h-6 w-6 text-terminal-accent" />
@@ -334,7 +334,7 @@ export default function MarketIntelligence() {
               return (
                 <div
                   key={idx}
-                  className={`bg-[#0a0a0a] border border-[#1f2937] rounded-lg p-5 hover:border-${item.color}-500/50 transition-colors`}
+                  className={`bg-terminal-bg border border-terminal-border rounded-lg p-5 hover:border-${item.color}-500/50 transition-colors`}
                 >
                   <div className={`p-2 rounded-lg mb-3 ${
                     item.color === 'green' ? 'bg-green-500/20' :
@@ -347,7 +347,7 @@ export default function MarketIntelligence() {
                       item.color === 'blue' ? 'text-blue-400' : 'text-purple-400'
                     }`} />
                   </div>
-                  <h3 className="text-sm font-semibold text-white mb-2">{item.title}</h3>
+                  <h3 className="text-sm font-semibold text-terminal-text mb-2">{item.title}</h3>
                   <p className="text-xs text-[#d1d5db] leading-relaxed">{item.description}</p>
                 </div>
               )
@@ -358,10 +358,10 @@ export default function MarketIntelligence() {
 
       {/* Section 4: Global Market Signals */}
       <FadeCard index={3}>
-        <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-6">
+        <div className="bg-terminal-surface border border-terminal-border rounded-xl p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-white mb-1">Global Signals</h2>
+              <h2 className="text-2xl font-bold text-terminal-text mb-1">Global Signals</h2>
               <p className="text-sm text-[#6b7280]">Cross-market intelligence</p>
             </div>
             <Globe className="h-6 w-6 text-terminal-accent" />
@@ -371,11 +371,11 @@ export default function MarketIntelligence() {
             {GLOBAL_SIGNALS.map((signal, idx) => (
               <div
                 key={idx}
-                className="bg-[#0a0a0a] border border-[#1f2937] rounded-lg p-5 hover:border-[#3b82f6]/50 transition-colors"
+                className="bg-terminal-bg border border-terminal-border rounded-lg p-5 hover:border-[#3b82f6]/50 transition-colors"
               >
                 <div className="flex items-center gap-3 mb-3">
                   <span className="text-2xl">{signal.flag}</span>
-                  <h3 className="text-sm font-semibold text-white">{signal.name}</h3>
+                  <h3 className="text-sm font-semibold text-terminal-text">{signal.name}</h3>
                 </div>
                 <div className="mb-2">
                   <span className={`px-3 py-1 rounded text-xs font-bold ${
