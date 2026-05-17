@@ -18,7 +18,7 @@ export default function App() {
         <Route index element={<Dashboard />} />
         <Route path="research" element={<Research />} />
         <Route path="markets" element={<Markets />} />
-        <Route path="/market-intelligence" element={<MarketIntelligence />} />
+        <Route path="market-intelligence" element={<MarketIntelligence />} />
         <Route path="quant" element={<QuantTools />} />
         <Route path="macro" element={<MacroFed />} />
         <Route path="african" element={<AfricanMarkets />} />
