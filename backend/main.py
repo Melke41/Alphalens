@@ -283,6 +283,99 @@ async def generate_report(request: Request):
     pdf_base64 = generate_research_report(body)
     return {"pdf": pdf_base64, "filename": f"AlphaLens_{body.get('symbol', 'Report')}_{datetime.now().strftime('%Y%m%d')}.pdf"}
 
+@app.get("/news/market")
+async def get_market_news():
+    from datetime import datetime
+    news = [
+        {
+            "id": 1,
+            "title": "Federal Reserve Officials Signal Caution on Rate Cuts Amid Inflation Persistence",
+            "source": "Reuters",
+            "time": "2 hours ago",
+            "category": "Fed Policy",
+            "impact": "HIGH",
+            "sentiment": "bearish",
+            "summary": "Fed officials indicated they need more confidence that inflation is sustainably moving toward 2% before cutting rates.",
+            "assets_affected": ["SPY", "QQQ", "TLT", "GLD"],
+            "color": "red"
+        },
+        {
+            "id": 2,
+            "title": "NVIDIA Earnings Beat Expectations as AI Chip Demand Surges",
+            "source": "Bloomberg",
+            "time": "4 hours ago",
+            "category": "Earnings",
+            "impact": "HIGH",
+            "sentiment": "bullish",
+            "summary": "NVIDIA reported record quarterly revenue driven by unprecedented demand for AI training chips.",
+            "assets_affected": ["NVDA", "AMD", "INTC", "QQQ"],
+            "color": "green"
+        },
+        {
+            "id": 3,
+            "title": "Bitcoin Surges Past $80,000 as Institutional Adoption Accelerates",
+            "source": "CoinDesk",
+            "time": "5 hours ago",
+            "category": "Crypto",
+            "impact": "HIGH",
+            "sentiment": "bullish",
+            "summary": "Bitcoin hit new highs as BlackRock ETF inflows reached record levels this week.",
+            "assets_affected": ["BTC-USD", "ETH-USD", "COIN", "MSTR"],
+            "color": "green"
+        },
+        {
+            "id": 4,
+            "title": "China Manufacturing PMI Contracts for Third Consecutive Month",
+            "source": "Financial Times",
+            "time": "6 hours ago",
+            "category": "Global Macro",
+            "impact": "MEDIUM",
+            "sentiment": "bearish",
+            "summary": "Chinese factory activity fell below 50 for the third month, raising concerns about global growth.",
+            "assets_affected": ["EEM", "FXI", "SPY", "OIL"],
+            "color": "red"
+        },
+        {
+            "id": 5,
+            "title": "Oil Prices Drop 3% on Rising US Inventory Data",
+            "source": "Reuters",
+            "time": "7 hours ago",
+            "category": "Commodities",
+            "impact": "MEDIUM",
+            "sentiment": "bearish",
+            "summary": "WTI crude fell sharply after EIA reported larger than expected build in US oil inventories.",
+            "assets_affected": ["USO", "XOM", "CVX", "OIL"],
+            "color": "red"
+        },
+        {
+            "id": 6,
+            "title": "African Development Bank Approves $2.5B Infrastructure Package for East Africa",
+            "source": "African Business",
+            "time": "8 hours ago",
+            "category": "African Markets",
+            "impact": "MEDIUM",
+            "sentiment": "bullish",
+            "summary": "Major infrastructure funding approved for Ethiopia, Kenya, and Tanzania covering energy and transport.",
+            "assets_affected": ["EEM", "AFK", "EQTY.NR", "SCOM.NR"],
+            "color": "green"
+        },
+        {
+            "id": 7,
+            "title": "Ethiopian Birr Stabilizes After Central Bank Intervention",
+            "source": "Addis Standard",
+            "time": "10 hours ago",
+            "category": "African Markets",
+            "impact": "MEDIUM",
+            "sentiment": "neutral",
+            "summary": "National Bank of Ethiopia stepped in to support the Birr after recent volatility in the forex market.",
+            "assets_affected": ["ETBUSD=X", "Ethiopian Banks"],
+            "color": "blue"
+        },
+    ]
+    return {
+        "news": news,
+        "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M UTC")
+    }
 
 if __name__ == "__main__":
     import uvicorn
