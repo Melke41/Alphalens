@@ -5,7 +5,6 @@ import {
   ArrowUpDown,
   AlertTriangle,
   Calendar,
-  FileText,
   Loader2,
   Radio,
 } from 'lucide-react'
@@ -31,12 +30,6 @@ const UPCOMING_EVENTS = [
   { name: 'Next GDP Release', date: 'May 29, 2026' },
 ]
 
-const SAMPLE_REPORTS = [
-  { title: 'BTC Regime Analysis', tag: 'Crypto', date: 'May 14, 2026' },
-  { title: 'Fed Policy Impact on Tech', tag: 'Macro', date: 'May 12, 2026' },
-  { title: 'NVDA Momentum Factor', tag: 'Equity', date: 'May 10, 2026' },
-  { title: 'Gold vs Real Rates', tag: 'Commodities', date: 'May 8, 2026' },
-]
 
 function buildMacroAlerts(dashboard) {
   if (!dashboard) return []
@@ -330,34 +323,6 @@ export default function Dashboard() {
           </Card>
         </FadeCard>
       </div>
-
-      {/* Row 4: Research Reports */}
-      <FadeCard index={6}>
-        <Card
-          title="Latest Research Reports"
-          subtitle="Institutional PDF outputs"
-          className="dashboard-card"
-        >
-          <FileText className="mb-4 h-4 w-4 text-terminal-accent" />
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {SAMPLE_REPORTS.map((report) => (
-              <div
-                key={report.title}
-                className="dashboard-card rounded-lg border border-terminal-border bg-terminal-bg p-4"
-              >
-                <span className="rounded border border-terminal-accent/20 bg-terminal-accent/5 px-2 py-0.5 font-mono text-[9px] text-terminal-accent">
-                  {report.tag}
-                </span>
-                <h4 className="mt-3 font-mono text-sm font-semibold text-terminal-text">
-                  {report.title}
-                </h4>
-                <p className="mt-2 font-mono text-[10px] text-terminal-muted">{report.date}</p>
-                <div className="mt-4 h-1 w-8 rounded bg-terminal-accent/40" />
-              </div>
-            ))}
-          </div>
-        </Card>
-      </FadeCard>
 
       <AiCopilot />
     </div>

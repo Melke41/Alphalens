@@ -2,6 +2,9 @@ import { useState } from 'react'
 import { Download } from 'lucide-react'
 import api, { sendResearchQuery } from '../utils/api'
 
+const STORAGE_KEY = 'alphalens_reports'
+const MAX_REPORTS = 20
+
 function StatRow({ label, value }) {
   return (
     <div className="flex justify-between items-start py-2 border-b border-[#1f2937] last:border-0">
@@ -14,7 +17,6 @@ function StatRow({ label, value }) {
 function MetricTile({ label, value, suffix = '', prefix = '' }) {
   const display =
     value === null || value === undefined ? '—' : `${prefix}${value}${suffix}`
-
   return (
     <div className="bg-[#0a0a0a] border border-[#1f2937] rounded-lg p-4">
       <span className="text-xs text-[#6b7280] font-mono uppercase tracking-wide block mb-2">
@@ -31,12 +33,33 @@ function deriveSymbol(queryAnalysis) {
   return String(asset).trim().toUpperCase().split(/\s+/)[0]
 }
 
+function saveReportToLibrary(data) {
+  try {
+    const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
+    const analysisType = data.query_analysis?.analysis_type || 'Analysis'
+    const symbol = deriveSymbol(data.query_analysis)
+    const newReport = {
+      id: Date.now(),
+      title: `${symbol} ${analysisType}`,
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      category: analysisType,
+      symbol: symbol,
+      data: data
+    }
+    const updated = [newReport, ...existing].slice(0, MAX_REPORTS)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
+  } catch (err) {
+    console.error('Failed to save report:', err)
+  }
+}
+
 export default function Research() {
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(false)
   const [pdfLoading, setPdfLoading] = useState(false)
   const [error, setError] = useState(null)
   const [results, setResults] = useState(null)
+  const [saveToast, setSaveToast] = useState(false)
 
   const runResearch = async () => {
     const trimmed = query.trim()
@@ -50,6 +73,12 @@ export default function Research() {
     try {
       const data = await sendResearchQuery(trimmed)
       setResults(data)
+
+      // Save to localStorage library
+      saveReportToLibrary(data)
+      setSaveToast(true)
+      setTimeout(() => setSaveToast(false), 3000)
+
     } catch (err) {
       setError(err.response?.data?.detail || err.message || 'Research failed')
     } finally {
@@ -185,6 +214,14 @@ export default function Research() {
             <Download className="h-4 w-4" />
             {pdfLoading ? 'Generating PDF...' : 'Download PDF Report'}
           </button>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {saveToast && (
+        <div className="fixed bottom-6 right-6 bg-[#3b82f6] text-white px-6 py-3 rounded-lg font-mono text-sm shadow-lg z-50 flex items-center gap-2">
+          <span>✅</span>
+          <span>Report saved to your library</span>
         </div>
       )}
     </div>

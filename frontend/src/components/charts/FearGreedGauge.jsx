@@ -57,13 +57,14 @@ export default function FearGreedGauge({
   }
 
   const score = displayData?.score ?? 50
+  const vix = displayData?.vix ?? null
 
   const getLabel = (value) => {
-    if (value <= 25) return 'Extreme Fear'
-    if (value <= 45) return 'Fear'
-    if (value <= 55) return 'Neutral'
-    if (value <= 75) return 'Greed'
-    return 'Extreme Greed'
+    if (value <= 25) return 'EXTREME FEAR'
+    if (value <= 45) return 'FEAR'
+    if (value <= 55) return 'NEUTRAL'
+    if (value <= 75) return 'GREED'
+    return 'EXTREME GREED'
   }
 
   const getColor = (value) => {
@@ -139,12 +140,22 @@ export default function FearGreedGauge({
         style={{ width: '100%', height: '250px' }}
         useResizeHandler
       />
-      <p
-        className="mt-[-20px] font-mono text-sm font-semibold uppercase tracking-wider"
-        style={{ color: currentColor }}
-      >
-        {currentLabel}
-      </p>
+      <div className="mt-[-20px] flex flex-col items-center space-y-2">
+        <p
+          className="font-mono text-lg font-bold uppercase tracking-wider"
+          style={{ color: currentColor }}
+        >
+          {currentLabel}
+        </p>
+        {vix !== null && (
+          <p className="font-mono text-xs text-terminal-muted">
+            VIX: {vix.toFixed(2)}
+          </p>
+        )}
+        <p className="font-mono text-[10px] text-terminal-muted text-center">
+          Market sentiment based on VIX and momentum
+        </p>
+      </div>
     </div>
   )
 }
