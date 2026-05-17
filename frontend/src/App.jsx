@@ -9,7 +9,6 @@ import QuantTools from './pages/QuantTools'
 import MacroFed from './pages/MacroFed'
 import AfricanMarkets from './pages/AfricanMarkets'
 import Reports from './pages/Reports'
-import MarketIntelligence from './pages/MarketIntelligence'
 
 export default function App() {
   return (
@@ -24,7 +23,6 @@ export default function App() {
         <Route path="macro" element={<MacroFed />} />
         <Route path="african" element={<AfricanMarkets />} />
         <Route path="reports" element={<Reports />} />
-        <Route path="market-intelligence" element={<MarketIntelligence />} />
       </Route>
     </Routes>
     </AppProvider>
