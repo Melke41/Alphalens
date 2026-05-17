@@ -7,9 +7,9 @@ const MAX_REPORTS = 20
 
 function StatRow({ label, value }) {
   return (
-    <div className="flex justify-between items-start py-2 border-b border-[#1f2937] last:border-0">
+    <div className="flex justify-between items-start py-2 border-b border-terminal-border last:border-0">
       <span className="text-xs text-[#6b7280] uppercase tracking-wide">{label}</span>
-      <span className="text-sm text-white font-mono text-right max-w-[60%]">{value ?? '—'}</span>
+      <span className="text-sm text-terminal-text font-mono text-right max-w-[60%]">{value ?? '—'}</span>
     </div>
   )
 }
@@ -18,11 +18,11 @@ function MetricTile({ label, value, suffix = '', prefix = '' }) {
   const display =
     value === null || value === undefined ? '—' : `${prefix}${value}${suffix}`
   return (
-    <div className="bg-[#0a0a0a] border border-[#1f2937] rounded-lg p-4">
+    <div className="bg-terminal-bg border border-terminal-border rounded-lg p-4">
       <span className="text-xs text-[#6b7280] font-mono uppercase tracking-wide block mb-2">
         {label}
       </span>
-      <span className="text-xl font-bold font-mono text-white">{display}</span>
+      <span className="text-xl font-bold font-mono text-terminal-text">{display}</span>
     </div>
   )
 }
@@ -118,26 +118,26 @@ export default function Research() {
   const stats = results?.market_stats
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white p-6 md:p-10 font-mono">
+    <div className="min-h-screen bg-terminal-bg text-terminal-text p-6 md:p-10 font-mono">
       <header className="mb-10">
-        <h1 className="text-4xl font-bold text-white mb-2">AI Research Copilot</h1>
+        <h1 className="text-4xl font-bold text-terminal-text mb-2">AI Research Copilot</h1>
         <p className="text-[#6b7280] text-lg">Natural Language Quantitative Research</p>
       </header>
 
-      <section className="bg-[#111827] border border-[#1f2937] rounded-xl p-6 mb-8">
+      <section className="bg-terminal-surface border border-terminal-border rounded-xl p-6 mb-8">
         <label className="block text-sm text-[#6b7280] mb-3">Research Question</label>
         <textarea
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="e.g. Does Bitcoin drop after Federal Reserve rate hikes?"
           rows={5}
-          className="w-full bg-[#0a0a0a] border border-[#1f2937] rounded-lg px-4 py-3 text-white placeholder-[#6b7280] focus:outline-none focus:border-[#3b82f6] font-mono resize-y min-h-[120px] mb-6"
+          className="w-full bg-terminal-bg border border-terminal-border rounded-lg px-4 py-3 text-terminal-text placeholder-[#6b7280] focus:outline-none focus:border-[#3b82f6] font-mono resize-y min-h-[120px] mb-6"
         />
         <button
           type="button"
           onClick={runResearch}
           disabled={loading}
-          className="px-8 py-3 bg-[#3b82f6] hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-semibold text-white transition-colors"
+          className="px-8 py-3 bg-[#3b82f6] hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-semibold text-terminal-text transition-colors"
         >
           Run Research
         </button>
@@ -157,7 +157,7 @@ export default function Research() {
       {results && !loading && (
         <div className="space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <section className="bg-[#111827] border border-[#1f2937] rounded-xl p-6">
+            <section className="bg-terminal-surface border border-terminal-border rounded-xl p-6">
               <h2 className="text-lg font-semibold text-[#3b82f6] mb-4">Query Analysis</h2>
               <StatRow label="Asset" value={qa?.asset} />
               <StatRow label="Timeframe" value={qa?.timeframe?.toUpperCase()} />
@@ -166,7 +166,7 @@ export default function Research() {
               <StatRow label="Narrative" value={results.narrative} />
             </section>
 
-            <section className="bg-[#111827] border border-[#1f2937] rounded-xl p-6">
+            <section className="bg-terminal-surface border border-terminal-border rounded-xl p-6">
               <h2 className="text-lg font-semibold text-[#3b82f6] mb-4">Market Stats</h2>
               {stats ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -198,8 +198,8 @@ export default function Research() {
             </section>
           </div>
 
-          <section className="bg-[#111827] border border-[#1f2937] border-l-4 border-l-[#3b82f6] rounded-xl p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">AI Research Narrative</h2>
+          <section className="bg-terminal-surface border border-terminal-border border-l-4 border-l-[#3b82f6] rounded-xl p-6">
+            <h2 className="text-lg font-semibold text-terminal-text mb-4">AI Research Narrative</h2>
             <p className="text-sm text-[#d1d5db] leading-relaxed whitespace-pre-wrap">
               {results.narrative || 'No narrative available.'}
             </p>
@@ -209,7 +209,7 @@ export default function Research() {
             type="button"
             onClick={downloadPdf}
             disabled={pdfLoading}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#3b82f6] hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-semibold text-white transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#3b82f6] hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-semibold text-terminal-text transition-colors"
           >
             <Download className="h-4 w-4" />
             {pdfLoading ? 'Generating PDF...' : 'Download PDF Report'}
@@ -219,7 +219,7 @@ export default function Research() {
 
       {/* Toast Notification */}
       {saveToast && (
-        <div className="fixed bottom-6 right-6 bg-[#3b82f6] text-white px-6 py-3 rounded-lg font-mono text-sm shadow-lg z-50 flex items-center gap-2">
+        <div className="fixed bottom-6 right-6 bg-[#3b82f6] text-terminal-text px-6 py-3 rounded-lg font-mono text-sm shadow-lg z-50 flex items-center gap-2">
           <span>✅</span>
           <span>Report saved to your library</span>
         </div>
