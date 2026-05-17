@@ -35,7 +35,7 @@ export default function AiCopilot() {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="copilot-fab fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-[#3b82f6] px-5 py-3 font-mono text-sm font-semibold text-white shadow-lg shadow-blue-500/30 transition-all hover:scale-105 hover:bg-blue-600 hover:shadow-blue-500/50"
+          className="copilot-fab fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-terminal-accent px-5 py-3 font-mono text-sm font-semibold text-terminal-text shadow-lg shadow-terminal-accent/30 transition-all hover:scale-105 hover:opacity-95"
         >
           <Brain className="h-5 w-5" />
           Ask AlphaLens
@@ -51,9 +51,7 @@ export default function AiCopilot() {
         <div className="flex items-center justify-between border-b border-terminal-border px-4 py-3">
           <div className="flex items-center gap-2">
             <Brain className="h-5 w-5 text-terminal-accent" />
-            <h2 className="font-mono text-sm font-semibold text-terminal-text">
-              AI Research Copilot
-            </h2>
+            <h2 className="font-mono text-sm font-semibold text-terminal-text">AI Research Copilot</h2>
           </div>
           <button
             type="button"
@@ -80,12 +78,8 @@ export default function AiCopilot() {
                   : 'mr-4 border border-terminal-border bg-terminal-bg'
               }`}
             >
-              <p className="mb-1 font-mono text-[10px] uppercase tracking-wider text-terminal-muted">
-                {msg.role === 'user' ? 'You' : 'AlphaLens'}
-              </p>
-              <p className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-terminal-text">
-                {msg.content}
-              </p>
+              <p className="mb-1 font-mono text-[10px] uppercase tracking-wider text-terminal-muted">{msg.role === 'user' ? 'You' : 'AlphaLens'}</p>
+              <p className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-terminal-text">{msg.content}</p>
               {msg.stats && (
                 <div className="mt-2 grid grid-cols-2 gap-2 border-t border-terminal-border pt-2">
                   {msg.stats.latest_price != null && (
@@ -98,10 +92,7 @@ export default function AiCopilot() {
                     <StatChip label="Sharpe" value={msg.stats.sharpe_ratio} />
                   )}
                   {msg.stats.volatility != null && (
-                    <StatChip
-                      label="Vol"
-                      value={`${(msg.stats.volatility * 100).toFixed(1)}%`}
-                    />
+                    <StatChip label="Vol" value={`${(msg.stats.volatility * 100).toFixed(1)}%`} />
                   )}
                 </div>
               )}
@@ -130,7 +121,7 @@ export default function AiCopilot() {
               type="button"
               onClick={handleSend}
               disabled={loading || !input.trim()}
-              className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#3b82f6] text-white transition-colors hover:bg-blue-600 disabled:opacity-40"
+              className="flex h-10 w-10 items-center justify-center rounded-lg bg-terminal-accent text-terminal-text transition-colors hover:opacity-95 disabled:opacity-40"
             >
               <Send className="h-4 w-4" />
             </button>
