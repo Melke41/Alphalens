@@ -4,6 +4,22 @@ import api, { safeApiCall } from '../../utils/api'
 import { ApiCooldownError } from '../../utils/apiCooldown'
 import { Loader2 } from 'lucide-react'
 
+function getPlotTheme() {
+  if (typeof window === 'undefined') {
+    return {
+      surface: '#0a0a0a',
+      grid: '#1f2937',
+      font: '#9ca3af',
+    }
+  }
+  const s = getComputedStyle(document.documentElement)
+  const surface = s.getPropertyValue('--terminal-bg')?.trim() || '#0a0a0a'
+  const surface2 = s.getPropertyValue('--terminal-surface')?.trim() || surface
+  const grid = s.getPropertyValue('--terminal-border')?.trim() || '#1f2937'
+  const font = s.getPropertyValue('--terminal-muted')?.trim() || '#9ca3af'
+  return { surface, surface2, grid, font }
+}
+
 export default function PriceChart({ symbol, period = '1y' }) {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -86,22 +102,22 @@ export default function PriceChart({ symbol, period = '1y' }) {
     y: data.volume || [],
     type: 'bar',
     marker: {
-      color: data.volume?.map((_, i) => 
-        data.close[i] >= data.open[i] ? '#3b82f6' : '#ef4444'
-      ),
+      color: data.volume?.map((_, i) => (data.close[i] >= data.open[i] ? '#3b82f6' : '#ef4444')),
     },
     xaxis: 'x',
     yaxis: 'y2',
   }
 
+  const plotTheme = getPlotTheme()
+
   const layout = {
-    paper_bgcolor: '#0a0a0a',
-    plot_bgcolor: '#0a0a0a',
-    font: { color: '#9ca3af', family: 'monospace' },
+    paper_bgcolor: plotTheme.surface,
+    plot_bgcolor: plotTheme.surface,
+    font: { color: plotTheme.font, family: 'monospace' },
     margin: { t: 60, r: 50, b: 50, l: 60 },
     xaxis: {
       domain: [0, 1],
-      gridcolor: '#1f2937',
+      gridcolor: plotTheme.grid,
       showgrid: true,
       zeroline: false,
       showspikes: true,
@@ -109,11 +125,11 @@ export default function PriceChart({ symbol, period = '1y' }) {
       spikesnap: 'cursor',
       spikethickness: 1,
       spikedash: 'solid',
-      spikecolor: '#9ca3af',
+      spikecolor: plotTheme.font,
     },
     yaxis: {
       domain: [0.25, 1],
-      gridcolor: '#1f2937',
+      gridcolor: plotTheme.grid,
       showgrid: true,
       zeroline: false,
       showspikes: true,
@@ -121,11 +137,11 @@ export default function PriceChart({ symbol, period = '1y' }) {
       spikesnap: 'cursor',
       spikethickness: 1,
       spikedash: 'solid',
-      spikecolor: '#9ca3af',
+      spikecolor: plotTheme.font,
     },
     yaxis2: {
       domain: [0, 0.2],
-      gridcolor: '#1f2937',
+      gridcolor: plotTheme.grid,
       showgrid: true,
       zeroline: false,
       showticklabels: false,
@@ -144,16 +160,11 @@ export default function PriceChart({ symbol, period = '1y' }) {
     <div className="w-full">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h3 className="font-mono text-xl font-bold text-white">{symbol}</h3>
+          <h3 className="font-mono text-xl font-bold text-terminal-text">{symbol}</h3>
           <div className="mt-1 flex items-center gap-3">
-            <span className="font-mono text-2xl font-bold text-white">
-              ${latestPrice?.toFixed(2)}
-            </span>
+            <span className="font-mono text-2xl font-bold text-terminal-text">${latestPrice?.toFixed(2)}</span>
             <span
-              className={`font-mono text-sm font-medium ${
-                latestChange >= 0 ? 'text-green-400' : 'text-red-400'
-              }`}
-            >
+              className={`font-mono text-sm font-medium ${latestChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
               {latestChange >= 0 ? '+' : ''}
               {latestChange?.toFixed(2)}%
             </span>
@@ -166,22 +177,15 @@ export default function PriceChart({ symbol, period = '1y' }) {
               onClick={() => setSelectedPeriod(p.toLowerCase())}
               className={`px-3 py-1.5 font-mono text-xs font-medium transition-colors ${
                 selectedPeriod.toLowerCase() === p.toLowerCase()
-                  ? 'bg-terminal-accent text-white'
+                  ? 'bg-terminal-accent text-terminal-text'
                   : 'bg-terminal-bg text-terminal-muted hover:bg-terminal-border'
-              }`}
-            >
+              }`}>
               {p}
             </button>
           ))}
         </div>
       </div>
-      <Plot
-        data={[candlestickTrace, volumeTrace]}
-        layout={layout}
-        config={config}
-        style={{ width: '100%', height: '400px' }}
-        useResizeHandler
-      />
+      <Plot data={[candlestickTrace, volumeTrace]} layout={layout} config={config} style={{ width: '100%', height: '400px' }} useResizeHandler />
     </div>
   )
 }
