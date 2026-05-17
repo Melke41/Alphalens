@@ -4,10 +4,10 @@ import Navbar from './Navbar'
 import { useApp } from '../context/AppContext'
 
 export default function Layout() {
-  const { sidebarCollapsed } = useApp()
+  const { sidebarCollapsed, theme } = useApp()
 
   return (
-    <div className="min-h-screen bg-terminal-bg" data-theme-root>
+    <div className={`${theme === 'light' ? 'light' : 'dark'} min-h-screen bg-terminal-bg`} data-theme-root>
       <Sidebar />
       <div
         className={`main-transition ${sidebarCollapsed ? 'pl-16' : 'pl-56'}`}
