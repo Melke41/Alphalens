@@ -3,9 +3,9 @@ import { useState } from 'react';
 const PERIODS = ['1M', '3M', '6M', '1Y', '2Y', '5Y'];
 
 function MetricCard({ name, value, subtext, good }) {
-  const valueColor = good === true ? 'text-green-400' : good === false ? 'text-red-400' : 'text-white';
+  const valueColor = good === true ? 'text-green-400' : good === false ? 'text-red-400' : 'text-terminal-text';
   return (
-    <div className="bg-[#111827] border border-[#1f2937] rounded-lg p-4 flex flex-col">
+    <div className="bg-terminal-surface border border-terminal-border rounded-lg p-4 flex flex-col">
       <span className="text-xs text-[#6b7280] font-mono uppercase tracking-wide mb-2">{name}</span>
       <span className={`text-2xl font-bold font-mono ${valueColor}`}>{value ?? '—'}</span>
       {subtext && <span className="text-xs text-[#6b7280] mt-1">{subtext}</span>}
@@ -53,16 +53,16 @@ export default function QuantTools() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white p-6 md:p-10 font-mono">
+    <div className="min-h-screen bg-terminal-bg text-terminal-text p-6 md:p-10 font-mono">
       {/* Header */}
       <header className="mb-10">
-        <h1 className="text-4xl font-bold text-white mb-2">Quant Tools</h1>
+        <h1 className="text-4xl font-bold text-terminal-text mb-2">Quant Tools</h1>
         <p className="text-[#6b7280] text-lg">Institutional-Grade Risk & Performance Analytics</p>
       </header>
 
       {/* Asset Analyzer */}
-      <section className="bg-[#111827] border border-[#1f2937] rounded-xl p-6 mb-8">
-        <h2 className="text-xl font-semibold text-white mb-6">Asset Analyzer</h2>
+      <section className="bg-terminal-surface border border-terminal-border rounded-xl p-6 mb-8">
+        <h2 className="text-xl font-semibold text-terminal-text mb-6">Asset Analyzer</h2>
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="flex-1">
             <label className="block text-sm text-[#6b7280] mb-2">Primary Symbol</label>
@@ -71,7 +71,7 @@ export default function QuantTools() {
               value={primarySymbol}
               onChange={(e) => setPrimarySymbol(e.target.value.toUpperCase())}
               placeholder="AAPL"
-              className="w-full bg-[#0a0a0a] border border-[#1f2937] rounded-lg px-4 py-3 text-white placeholder-[#6b7280] focus:outline-none focus:border-[#3b82f6] font-mono"
+              className="w-full bg-terminal-bg border border-terminal-border rounded-lg px-4 py-3 text-terminal-text placeholder-[#6b7280] focus:outline-none focus:border-[#3b82f6] font-mono"
             />
           </div>
           <div className="flex-1">
@@ -81,7 +81,7 @@ export default function QuantTools() {
               value={benchmarkSymbol}
               onChange={(e) => setBenchmarkSymbol(e.target.value.toUpperCase())}
               placeholder="SPY"
-              className="w-full bg-[#0a0a0a] border border-[#1f2937] rounded-lg px-4 py-3 text-white placeholder-[#6b7280] focus:outline-none focus:border-[#3b82f6] font-mono"
+              className="w-full bg-terminal-bg border border-terminal-border rounded-lg px-4 py-3 text-terminal-text placeholder-[#6b7280] focus:outline-none focus:border-[#3b82f6] font-mono"
             />
           </div>
         </div>
@@ -95,8 +95,8 @@ export default function QuantTools() {
                 onClick={() => setSelectedPeriod(p)}
                 className={`px-4 py-2 rounded-lg font-mono text-sm transition-colors ${
                   selectedPeriod === p
-                    ? 'bg-[#3b82f6] text-white'
-                    : 'bg-[#0a0a0a] border border-[#1f2937] text-[#6b7280] hover:border-[#3b82f6] hover:text-white'
+                    ? 'bg-[#3b82f6] text-terminal-text'
+                    : 'bg-terminal-bg border border-terminal-border text-[#6b7280] hover:border-[#3b82f6] hover:text-terminal-text'
                 }`}
               >
                 {p}
@@ -108,7 +108,7 @@ export default function QuantTools() {
         <button
           onClick={runAnalysis}
           disabled={loading}
-          className="w-full md:w-auto px-8 py-3 bg-[#3b82f6] hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-semibold text-white transition-colors"
+          className="w-full md:w-auto px-8 py-3 bg-[#3b82f6] hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-semibold text-terminal-text transition-colors"
         >
           {loading ? 'Running institutional analysis...' : 'Run Analysis'}
         </button>
@@ -119,12 +119,12 @@ export default function QuantTools() {
       {/* Results Grid */}
       {results && (
         <section className="mb-8">
-          <h2 className="text-xl font-semibold text-white mb-6">Analysis Results — {results.symbol}</h2>
+          <h2 className="text-xl font-semibold text-terminal-text mb-6">Analysis Results — {results.symbol}</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <MetricCard name="Latest Price" value={`$${fmt(results.latest_price)}`} />
             <MetricCard name="Total Return" value={fmt(results.total_return, '%')} good={results.total_return > 0} />
             <MetricCard name="Volatility" value={fmt(results.volatility * 100, '%')} good={results.volatility < 0.2} />
-            <MetricCard name="Sharpe Ratio" value={fmt(results.sharpe_ratio, '', 3)} good={results.sharpe_ratio > 1} subtext={results.sharpe_ratio > 2 ? 'Excellent' : results.sharpe_ratio > 1 ? 'Good' : 'Below average'} />
+            <MetricCard name="Sharpe Ratio" value={fmt(results.sharpe_ratio, '', 3)} good={results.sharpe_ratio > 1} subtext={results.sharpe_ratio > 2 ? 'Excellent' : results.sharpe_ratio > 1 ? 'Good' : 'Average'} />
             <MetricCard name="Sortino Ratio" value={fmt(results.sortino_ratio, '', 3)} good={results.sortino_ratio > 1} />
             <MetricCard name="Max Drawdown" value={fmt(results.max_drawdown * 100, '%')} good={results.max_drawdown > -0.2} />
             <MetricCard name="VaR 95%" value={fmt(results.var_95 * 100, '%')} />
@@ -145,8 +145,8 @@ export default function QuantTools() {
 
       {/* Z-Score Anomaly Detection */}
       {results && results.zscore && (
-        <section className="bg-[#111827] border border-[#1f2937] rounded-xl p-6">
-          <h2 className="text-xl font-semibold text-white mb-2">Price Anomaly Detection</h2>
+        <section className="bg-terminal-surface border border-terminal-border rounded-xl p-6">
+          <h2 className="text-xl font-semibold text-terminal-text mb-2">Price Anomaly Detection</h2>
           <p className="text-[#6b7280] text-sm mb-6">Z-Score — signals above +2 or below -2 indicate anomalies</p>
           <div className="w-full overflow-x-auto">
             <div className="h-64 flex items-end gap-px">
@@ -174,9 +174,9 @@ export default function QuantTools() {
       )}
 
       {!results && !loading && (
-        <section className="bg-[#111827] border border-[#1f2937] rounded-xl p-6">
-          <h2 className="text-xl font-semibold text-white mb-2">Z-Score Anomaly Detection</h2>
-          <div className="h-64 flex items-center justify-center border border-[#1f2937] rounded-lg bg-[#0a0a0a]">
+        <section className="bg-terminal-surface border border-terminal-border rounded-xl p-6">
+          <h2 className="text-xl font-semibold text-terminal-text mb-2">Z-Score Anomaly Detection</h2>
+          <div className="h-64 flex items-center justify-center border border-terminal-border rounded-lg bg-terminal-bg">
             <p className="text-[#6b7280]">Run analysis to see anomaly detection chart</p>
           </div>
         </section>
