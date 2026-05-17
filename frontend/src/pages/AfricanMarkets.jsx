@@ -3,21 +3,26 @@ import axios from 'axios'
 import Plot from 'react-plotly.js'
 import { sendResearchQuery } from '../utils/api'
 
-const plotLayout = {
-  paper_bgcolor: '#111827',
-  plot_bgcolor: '#111827',
-  font: { color: '#9ca3af', size: 11 },
-  xaxis: { gridcolor: '#1f2937', tickangle: -35 },
-  yaxis: { gridcolor: '#1f2937', ticksuffix: '%' },
-  margin: { t: 40, r: 20, b: 80, l: 50 },
-  showlegend: false,
+function getPlotTheme() {
+  if (typeof window === 'undefined') {
+    return {
+      surface: '#111827',
+      grid: '#1f2937',
+      font: '#9ca3af',
+    }
+  }
+  const s = getComputedStyle(document.documentElement)
+  const surface = s.getPropertyValue('--terminal-surface')?.trim() || '#111827'
+  const grid = s.getPropertyValue('--terminal-border')?.trim() || '#1f2937'
+  const font = s.getPropertyValue('--terminal-muted')?.trim() || '#9ca3af'
+  return { surface, grid, font }
 }
 
 function StockCard({ item }) {
   if (!item.available) {
     return (
-      <div className="bg-[#1f2937]/40 border border-[#374151] rounded-xl p-5 opacity-75">
-        <h3 className="text-white font-semibold mb-1">{item.name}</h3>
+      <div className="bg-terminal-elevated opacity-75 border border-terminal-border rounded-xl p-5">
+        <h3 className="text-terminal-text font-semibold mb-1">{item.name}</h3>
         <p className="text-xs text-[#6b7280] font-mono mb-3">{item.symbol}</p>
         <p className="text-sm text-[#9ca3af] font-medium">Data Unavailable</p>
         <p className="text-xs text-[#6b7280] mt-1">{item.note || 'No data'}</p>
@@ -28,10 +33,10 @@ function StockCard({ item }) {
   const changeColor = item.positive ? 'text-green-400' : 'text-red-400'
 
   return (
-    <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-5 hover:border-[#3b82f6]/40 transition-colors">
-      <h3 className="text-white font-semibold mb-1">{item.name}</h3>
+    <div className="bg-terminal-surface border border-terminal-border rounded-xl p-5 hover:border-[#3b82f6]/40 transition-colors">
+      <h3 className="text-terminal-text font-semibold mb-1">{item.name}</h3>
       <p className="text-xs text-[#6b7280] font-mono mb-4">{item.symbol}</p>
-      <p className="text-2xl font-bold font-mono text-white mb-1">
+      <p className="text-2xl font-bold font-mono text-terminal-text mb-1">
         {item.price != null ? `$${item.price}` : '—'}
       </p>
       <p className={`text-sm font-mono font-semibold ${changeColor}`}>
@@ -93,16 +98,18 @@ export default function AfricanMarkets() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center font-mono">
+      <div className="min-h-screen bg-terminal-bg flex items-center justify-center font-mono">
         <p className="text-[#6b7280]">Loading African Markets...</p>
       </div>
     )
   }
 
+  const plotTheme = getPlotTheme()
+
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white p-6 md:p-10 font-mono">
+    <div className="min-h-screen bg-terminal-bg text-terminal-text p-6 md:p-10 font-mono">
       <header className="mb-6">
-        <h1 className="text-4xl font-bold text-white mb-2">African Markets</h1>
+        <h1 className="text-4xl font-bold text-terminal-text mb-2">African Markets</h1>
         <p className="text-[#6b7280] text-lg mb-3">
           The Only Institutional Platform Covering African Financial Markets
         </p>
@@ -127,10 +134,10 @@ export default function AfricanMarkets() {
       {/* Section 2: Currency Monitor */}
       <section className="mb-12">
         <h2 className="text-xl font-semibold text-[#3b82f6] mb-6">African Currency Monitor</h2>
-        <div className="bg-[#111827] border border-[#1f2937] rounded-xl overflow-hidden">
+        <div className="bg-terminal-surface border border-terminal-border rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[#1f2937] bg-[#0a0a0a]">
+              <tr className="border-b border-terminal-border bg-terminal-bg">
                 <th className="text-left px-4 py-3 text-xs text-[#6b7280] uppercase tracking-wide">
                   Currency
                 </th>
@@ -147,9 +154,9 @@ export default function AfricanMarkets() {
             </thead>
             <tbody>
               {currencies.map((row) => (
-                <tr key={row.name} className="border-b border-[#1f2937] last:border-0 hover:bg-[#0a0a0a]/50">
-                  <td className="px-4 py-3 text-white">{row.name}</td>
-                  <td className="px-4 py-3 text-right text-white font-mono">
+                <tr key={row.name} className="border-b border-terminal-border last:border-0 hover:bg-terminal-bg/50">
+                  <td className="px-4 py-3 text-terminal-text">{row.name}</td>
+                  <td className="px-4 py-3 text-right text-terminal-text font-mono">
                     {row.available && row.usd_rate != null ? (
                       <span>
                         {row.usd_rate}
@@ -177,7 +184,7 @@ export default function AfricanMarkets() {
                       className={`text-xs px-2 py-1 rounded ${
                         row.available
                           ? 'bg-green-400/10 text-green-400'
-                          : 'bg-[#374151]/50 text-[#9ca3af]'
+                          : 'bg-terminal-border/50 text-[#9ca3af]'
                       }`}
                     >
                       {row.available ? 'Live' : 'Unavailable'}
@@ -192,12 +199,12 @@ export default function AfricanMarkets() {
 
       {/* Section 3: Macro Charts */}
       <section className="mb-12">
-        <h2 className="text-xl font-semibold text-white mb-2">African Economic Indicators 2024</h2>
+        <h2 className="text-xl font-semibold text-terminal-text mb-2">African Economic Indicators 2024</h2>
         {macro?.source && (
           <p className="text-xs text-[#6b7280] mb-6">{macro.source}</p>
         )}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-4">
+          <div className="bg-terminal-surface border border-terminal-border rounded-xl p-4">
             <h3 className="text-sm font-semibold text-[#3b82f6] mb-2 px-1">GDP Growth</h3>
             <Plot
               data={[
@@ -209,14 +216,22 @@ export default function AfricanMarkets() {
                 },
               ]}
               layout={{
-                ...plotLayout,
-                title: { text: 'GDP Growth by Country', font: { color: '#fff', size: 12 } },
+                ...{
+                  paper_bgcolor: plotTheme.surface,
+                  plot_bgcolor: plotTheme.surface,
+                  font: { color: plotTheme.font, size: 11 },
+                  xaxis: { gridcolor: plotTheme.grid, tickangle: -35 },
+                  yaxis: { gridcolor: plotTheme.grid, ticksuffix: '%' },
+                  margin: { t: 40, r: 20, b: 80, l: 50 },
+                  showlegend: false,
+                },
+                title: { text: 'GDP Growth by Country', font: { color: plotTheme.font, size: 12 } },
               }}
               style={{ width: '100%', height: '320px' }}
               useResizeHandler
             />
           </div>
-          <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-4">
+          <div className="bg-terminal-surface border border-terminal-border rounded-xl p-4">
             <h3 className="text-sm font-semibold text-orange-400 mb-2 px-1">Inflation</h3>
             <Plot
               data={[
@@ -228,8 +243,16 @@ export default function AfricanMarkets() {
                 },
               ]}
               layout={{
-                ...plotLayout,
-                title: { text: 'Inflation by Country', font: { color: '#fff', size: 12 } },
+                ...{
+                  paper_bgcolor: plotTheme.surface,
+                  plot_bgcolor: plotTheme.surface,
+                  font: { color: plotTheme.font, size: 11 },
+                  xaxis: { gridcolor: plotTheme.grid, tickangle: -35 },
+                  yaxis: { gridcolor: plotTheme.grid, ticksuffix: '%' },
+                  margin: { t: 40, r: 20, b: 80, l: 50 },
+                  showlegend: false,
+                },
+                title: { text: 'Inflation by Country', font: { color: plotTheme.font, size: 12 } },
               }}
               style={{ width: '100%', height: '320px' }}
               useResizeHandler
@@ -239,7 +262,7 @@ export default function AfricanMarkets() {
       </section>
 
       {/* Section 4: AI Research */}
-      <section className="bg-[#111827] border border-[#1f2937] rounded-xl p-6">
+      <section className="bg-terminal-surface border border-terminal-border rounded-xl p-6">
         <h2 className="text-xl font-semibold text-[#3b82f6] mb-4">Research Any African Asset</h2>
         <div className="flex flex-col md:flex-row gap-4 mb-4">
           <input
@@ -247,19 +270,19 @@ export default function AfricanMarkets() {
             value={researchQuery}
             onChange={(e) => setResearchQuery(e.target.value)}
             placeholder="e.g. Safaricom SCOM.NR or Nigerian banking sector outlook"
-            className="flex-1 bg-[#0a0a0a] border border-[#1f2937] rounded-lg px-4 py-3 text-white placeholder-[#6b7280] focus:outline-none focus:border-[#3b82f6] font-mono"
+            className="flex-1 bg-terminal-bg border border-terminal-border rounded-lg px-4 py-3 text-terminal-text placeholder-[#6b7280] focus:outline-none focus:border-[#3b82f6] font-mono"
           />
           <button
             type="button"
             onClick={runResearch}
             disabled={researchLoading || !researchQuery.trim()}
-            className="px-6 py-3 bg-[#3b82f6] hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-semibold text-white transition-colors whitespace-nowrap"
+            className="px-6 py-3 bg-[#3b82f6] hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-semibold text-terminal-text transition-colors whitespace-nowrap"
           >
             {researchLoading ? 'Researching...' : 'Research with AI'}
           </button>
         </div>
         {researchResult && (
-          <div className="bg-[#0a0a0a] border border-[#1f2937] border-l-4 border-l-[#3b82f6] rounded-lg p-4">
+          <div className="bg-terminal-bg border border-terminal-border border-l-4 border-l-[#3b82f6] rounded-lg p-4">
             <p className="text-sm text-[#d1d5db] leading-relaxed whitespace-pre-wrap">
               {researchResult.narrative || 'No narrative available.'}
             </p>
