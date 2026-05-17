@@ -6,7 +6,7 @@ import {
 } from './apiCooldown';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000',
+  baseURL: 'https://alphalens-backend-23p4.onrender.com',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',

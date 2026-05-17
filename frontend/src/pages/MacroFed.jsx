@@ -15,7 +15,7 @@ export default function MacroFed() {
 
   const fetchDashboard = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/macro/dashboard');
+      const response = await axios.get('https://alphalens-backend-23p4.onrender.com/macro/dashboard');
       setDashboard(response.data);
     } catch (error) {
       console.error('Error fetching macro dashboard:', error);
@@ -28,7 +28,7 @@ export default function MacroFed() {
     if (!fedQuery.trim()) return;
     setAnalyzing(true);
     try {
-      const response = await axios.post('http://localhost:8000/research', {
+      const response = await axios.post('https://alphalens-backend-23p4.onrender.com/research', {
         query: fedQuery
       });
       setFedAnalysis(response.data);

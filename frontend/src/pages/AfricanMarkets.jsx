@@ -54,9 +54,9 @@ export default function AfricanMarkets() {
     const load = async () => {
       try {
         const [marketsRes, currenciesRes, macroRes] = await Promise.all([
-          axios.get('http://localhost:8000/african/markets'),
-          axios.get('http://localhost:8000/african/currencies'),
-          axios.get('http://localhost:8000/african/macro'),
+          axios.get('https://alphalens-backend-23p4.onrender.com/african/markets'),
+          axios.get('https://alphalens-backend-23p4.onrender.com/african/currencies'),
+          axios.get('https://alphalens-backend-23p4.onrender.com/african/macro'),
         ])
         setMarkets(marketsRes.data)
         setCurrencies(currenciesRes.data)

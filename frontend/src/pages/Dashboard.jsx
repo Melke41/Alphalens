@@ -38,10 +38,10 @@ function formatApiError(err) {
     parts.push(`URL: ${err.config?.baseURL || ''}${err.config?.url || ''}`)
   } else if (err?.request) {
     parts.push(
-      'No response from server. Check that uvicorn is running at http://localhost:8000',
+      'No response from server. Check that uvicorn is running at https://alphalens-backend-23p4.onrender.com',
     )
     parts.push(
-      `Request URL: ${err.config?.baseURL || 'http://localhost:8000'}${err.config?.url || ''}`,
+      `Request URL: ${err.config?.baseURL || 'https://alphalens-backend-23p4.onrender.com'}${err.config?.url || ''}`,
     )
   }
 

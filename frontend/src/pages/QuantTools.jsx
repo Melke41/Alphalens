@@ -27,7 +27,7 @@ export default function QuantTools() {
     setResults(null);
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/calculate', {
+      const response = await fetch('https://alphalens-backend-23p4.onrender.com/calculate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
