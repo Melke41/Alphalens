@@ -160,7 +160,7 @@ export default function Markets() {
           <p className="mb-1 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-terminal-muted">
             Market Intelligence
           </p>
-          <h1 className="font-mono text-2xl font-bold tracking-tight text-white">
+          <h1 className="font-mono text-2xl font-bold tracking-tight text-terminal-text">
             Markets
           </h1>
         </div>
