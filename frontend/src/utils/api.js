@@ -94,4 +94,9 @@ export const getHeatmap = async () => {
   return response.data;
 };
 
+export const getMacroDashboard = async () => {
+  const response = await api.get('/macro/dashboard');
+  return response.data;
+};
+
 export default api;

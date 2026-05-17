@@ -1,7 +1,7 @@
 export default function Card({ title, subtitle, children, className = '', accent }) {
   return (
     <div
-      className={`flex flex-col overflow-hidden rounded-lg border border-terminal-border bg-terminal-surface shadow-card transition-colors hover:border-terminal-accent/30 ${className}`}
+      className={`flex flex-col overflow-hidden rounded-lg border border-terminal-border bg-terminal-surface shadow-card transition-all duration-300 hover:border-terminal-accent/30 ${className}`}
     >
       <div className="flex items-center justify-between border-b border-terminal-border px-4 py-3">
         <div>

@@ -5,14 +5,14 @@ export default {
     extend: {
       colors: {
         terminal: {
-          bg: '#0a0a0a',
-          surface: '#111111',
-          elevated: '#161616',
-          border: '#1f1f1f',
+          bg: 'var(--terminal-bg)',
+          surface: 'var(--terminal-surface)',
+          elevated: 'var(--terminal-elevated)',
+          border: 'var(--terminal-border)',
           accent: '#3b82f6',
           'accent-dim': '#2563eb',
-          muted: '#6b7280',
-          text: '#e5e5e5',
+          muted: 'var(--terminal-muted)',
+          text: 'var(--terminal-text)',
         },
       },
       fontFamily: {

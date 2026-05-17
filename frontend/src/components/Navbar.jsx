@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Search } from 'lucide-react'
+import { Search, Sun, Moon } from 'lucide-react'
 import { checkHealth, safeApiCall } from '../utils/api'
 import { REFRESH_INTERVAL_3MIN } from '../utils/refreshIntervals'
 import { isMarketOpen } from '../utils/marketHours'
+import { useApp } from '../context/AppContext'
 
 function formatDateTime(date) {
   return {
@@ -24,6 +25,7 @@ function formatDateTime(date) {
 }
 
 export default function Navbar() {
+  const { theme, toggleTheme } = useApp()
   const [now, setNow] = useState(() => new Date())
   const [marketOpen, setMarketOpen] = useState(() => isMarketOpen())
   const [backendConnected, setBackendConnected] = useState(false)
@@ -52,7 +54,6 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-4 border-b border-terminal-border bg-terminal-bg/95 px-6 backdrop-blur-sm">
-      {/* Date & time */}
       <div className="flex shrink-0 items-center gap-4 font-mono text-xs">
         <div>
           <p className="text-terminal-muted">SESSION</p>
@@ -67,7 +68,6 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Search */}
       <div className="relative mx-auto w-full max-w-xl flex-1">
         <Search
           className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-terminal-muted"
@@ -85,7 +85,15 @@ export default function Navbar() {
         </kbd>
       </div>
 
-      {/* Backend connection */}
+      <button
+        type="button"
+        onClick={toggleTheme}
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-terminal-border bg-terminal-elevated text-terminal-text transition-colors hover:border-terminal-accent/40 hover:text-terminal-accent"
+        aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+      >
+        {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+      </button>
+
       <div
         className={`flex shrink-0 items-center gap-2 rounded-md border px-3 py-2 font-mono text-xs ${
           backendConnected
@@ -100,8 +108,8 @@ export default function Navbar() {
           <span
             className={`relative inline-flex h-2 w-2 rounded-full ${
               backendConnected
-                ? 'bg-terminal-accent shadow-[0_0_8px_#3b82f6]'
-                : 'bg-red-400 shadow-[0_0_8px_#f87171]'
+                ? 'live-indicator-pulse bg-terminal-accent'
+                : 'bg-red-400'
             }`}
           />
         </span>
@@ -110,7 +118,6 @@ export default function Navbar() {
         </span>
       </div>
 
-      {/* Market status */}
       <div
         className={`flex shrink-0 items-center gap-2 rounded-md border px-3 py-2 font-mono text-xs ${
           marketOpen
@@ -120,9 +127,7 @@ export default function Navbar() {
       >
         <span
           className={`h-2 w-2 rounded-full ${
-            marketOpen
-              ? 'bg-terminal-accent shadow-[0_0_8px_#3b82f6]'
-              : 'bg-red-400 shadow-[0_0_8px_#f87171]'
+            marketOpen ? 'bg-terminal-accent shadow-[0_0_8px_#3b82f6]' : 'bg-red-400'
           }`}
         />
         <span className="font-bold tracking-wider">

@@ -1,530 +1,366 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import {
-  Brain,
   TrendingUp,
   Gauge,
   ArrowUpDown,
   AlertTriangle,
+  Calendar,
   FileText,
-  Send,
   Loader2,
+  Radio,
 } from 'lucide-react'
 import Card from '../components/Card'
+import FearGreedGauge from '../components/charts/FearGreedGauge'
+import AnimatedNumber from '../components/AnimatedNumber'
+import AiCopilot from '../components/AiCopilot'
 import {
-  sendResearchQuery,
   getMarketQuotes,
   getFearGreed,
   getTopMovers,
-  getHeatmap,
+  getMacroDashboard,
   safeApiCall,
 } from '../utils/api'
-import { ApiCooldownError } from '../utils/apiCooldown'
 import { REFRESH_INTERVAL_5MIN, delay } from '../utils/refreshIntervals'
-import FearGreedGauge from '../components/charts/FearGreedGauge'
-import HeatmapChart from '../components/charts/HeatmapChart'
-import PriceChart from '../components/charts/PriceChart'
-import ResearchChart from '../components/charts/ResearchChart'
 
-function formatApiError(err) {
-  const parts = []
+const WATCHLIST = ['SPY', 'QQQ', 'BTC-USD', 'GLD', 'NVDA', 'TSLA']
 
-  if (err?.message) parts.push(`Message: ${err.message}`)
-  if (err?.code) parts.push(`Code: ${err.code}`)
-  if (err?.name) parts.push(`Name: ${err.name}`)
+const UPCOMING_EVENTS = [
+  { name: 'Next FOMC Meeting', date: 'Jun 17–18, 2026' },
+  { name: 'Next CPI Release', date: 'Jun 11, 2026' },
+  { name: 'Next Jobs Report', date: 'Jun 5, 2026' },
+  { name: 'Next GDP Release', date: 'May 29, 2026' },
+]
 
-  if (err?.response) {
-    parts.push(`Status: ${err.response.status} ${err.response.statusText || ''}`.trim())
-    parts.push(`Response: ${JSON.stringify(err.response.data, null, 2)}`)
-    parts.push(`URL: ${err.config?.baseURL || ''}${err.config?.url || ''}`)
-  } else if (err?.request) {
-    parts.push(
-      'No response from server. Check that uvicorn is running at https://alphalens-backend-23p4.onrender.com',
-    )
-    parts.push(
-      `Request URL: ${err.config?.baseURL || 'https://alphalens-backend-23p4.onrender.com'}${err.config?.url || ''}`,
-    )
+const SAMPLE_REPORTS = [
+  { title: 'BTC Regime Analysis', tag: 'Crypto', date: 'May 14, 2026' },
+  { title: 'Fed Policy Impact on Tech', tag: 'Macro', date: 'May 12, 2026' },
+  { title: 'NVDA Momentum Factor', tag: 'Equity', date: 'May 10, 2026' },
+  { title: 'Gold vs Real Rates', tag: 'Commodities', date: 'May 8, 2026' },
+]
+
+function buildMacroAlerts(dashboard) {
+  if (!dashboard) return []
+  const alerts = []
+
+  if (dashboard.real_rate < 0) {
+    alerts.push({
+      type: 'caution',
+      text: '⚠️ Negative Real Rates — Inflationary environment',
+    })
+  }
+  if (dashboard.yield_curve?.inverted) {
+    alerts.push({
+      type: 'warning',
+      text: '🚨 Yield Curve Inverted — Recession risk elevated',
+    })
+  }
+  if (dashboard.inflation?.current > 3) {
+    alerts.push({
+      type: 'caution',
+      text: '📈 Inflation above Fed target — Watch for rate hikes',
+    })
+  }
+  if (dashboard.fed_funds_rate?.current > 5) {
+    alerts.push({
+      type: 'info',
+      text: '🏦 Fed Funds Rate at decade high — Risk assets under pressure',
+    })
   }
 
-  if (err?.stack) parts.push(`Stack:\n${err.stack}`)
-
-  return parts.length > 0 ? parts.join('\n\n') : String(err)
+  return alerts
 }
 
-function LoadingSpinner({ label = 'Loading...' }) {
+const borderByType = {
+  warning: 'border-l-red-500',
+  caution: 'border-l-orange-500',
+  info: 'border-l-blue-500',
+}
+
+function FadeCard({ index, children, className = '' }) {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-3 py-8">
-      <Loader2 className="h-6 w-6 animate-spin text-terminal-accent" />
-      <p className="font-mono text-[10px] uppercase tracking-wider text-terminal-muted">
-        {label}
+    <div
+      className={`animate-fade-in-up ${className}`}
+      style={{ animationDelay: `${index * 0.1}s` }}
+    >
+      {children}
+    </div>
+  )
+}
+
+function QuoteCard({ quote }) {
+  const positive = quote.positive
+  return (
+    <div className="dashboard-card rounded-lg border border-terminal-border bg-terminal-surface p-4">
+      <p className="font-mono text-xs font-semibold text-terminal-muted">{quote.symbol}</p>
+      <p className="mt-2 font-mono text-2xl font-bold text-terminal-text">
+        {quote.price != null ? (
+          <AnimatedNumber value={quote.price} decimals={2} prefix="$" />
+        ) : (
+          '—'
+        )}
       </p>
-    </div>
-  )
-}
-
-function PlaceholderBlock({ label, rows = 4 }) {
-  return (
-    <div className="flex flex-1 flex-col gap-2">
-      {Array.from({ length: rows }).map((_, i) => (
-        <div
-          key={i}
-          className="flex items-center gap-3 rounded border border-terminal-border/60 bg-terminal-bg/50 px-3 py-2.5"
-        >
-          <div className="h-2 w-2 shrink-0 rounded-full bg-terminal-border" />
-          <div
-            className="h-2 flex-1 rounded bg-terminal-border/80"
-            style={{ width: `${55 + (i % 3) * 12}%`, maxWidth: '100%' }}
-          />
-          <div className="h-2 w-12 shrink-0 rounded bg-terminal-border/60" />
-        </div>
-      ))}
-      <p className="mt-auto pt-2 text-center font-mono text-[10px] text-terminal-muted/50">
-        {label}
-      </p>
-    </div>
-  )
-}
-
-function MarketOverviewContent({ quotes, loading, error }) {
-  if (loading) return <LoadingSpinner label="Fetching quotes..." />
-  if (error) {
-    return (
-      <p className="font-mono text-xs text-red-400">{error}</p>
-    )
-  }
-  if (!quotes?.length) {
-    return (
-      <p className="font-mono text-xs text-terminal-muted">No quote data available</p>
-    )
-  }
-
-  return (
-    <div className="flex flex-1 flex-col gap-1.5">
-      {quotes.map((q) => (
-        <div
-          key={q.symbol}
-          className="flex items-center justify-between rounded border border-terminal-border/60 bg-terminal-bg/50 px-3 py-2"
-        >
-          <span className="font-mono text-xs font-semibold text-terminal-text">
-            {q.symbol}
-          </span>
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-xs tabular-nums text-terminal-text">
-              {q.price?.toLocaleString?.() ?? q.price}
-            </span>
-            <span
-              className={`font-mono text-xs font-medium tabular-nums ${
-                q.positive ? 'text-green-400' : 'text-red-400'
-              }`}
-            >
-              {q.positive ? '+' : ''}
-              {q.change_pct}%
-            </span>
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function FearGreedContent({ data, loading, error }) {
-  if (loading) return <LoadingSpinner label="Calculating sentiment..." />
-  if (error) {
-    return <p className="font-mono text-xs text-red-400">{error}</p>
-  }
-
-  const score = data?.score ?? 50
-  const label = data?.label ?? 'Neutral'
-  const color = data?.color ?? '#eab308'
-
-  return (
-    <div className="flex flex-1 flex-col items-center justify-center py-2">
       <p
-        className="font-mono text-5xl font-bold tabular-nums"
-        style={{ color }}
-      >
-        {score}
-      </p>
-      <p className="mt-1 font-mono text-sm font-semibold uppercase tracking-wider text-terminal-text">
-        {label}
-      </p>
-
-      {/* Arc-style gauge via filled bar */}
-      <div className="mt-6 w-full max-w-xs">
-        <div className="h-3 overflow-hidden rounded-full bg-terminal-border">
-          <div
-            className="h-full rounded-full transition-all duration-700"
-            style={{ width: `${score}%`, backgroundColor: color }}
-          />
-        </div>
-        <div className="mt-1 flex justify-between font-mono text-[9px] text-terminal-muted">
-          <span>FEAR</span>
-          <span>NEUTRAL</span>
-          <span>GREED</span>
-        </div>
-      </div>
-
-      {(data?.vix != null || data?.spy_return_3mo != null) && (
-        <div className="mt-4 flex gap-4 font-mono text-[10px] text-terminal-muted">
-          {data.vix != null && <span>VIX {data.vix}</span>}
-          {data.spy_return_3mo != null && (
-            <span>SPY 3M {data.spy_return_3mo > 0 ? '+' : ''}{data.spy_return_3mo}%</span>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function TopMoversContent({ movers, loading, error }) {
-  if (loading) return <LoadingSpinner label="Scanning movers..." />
-  if (error) {
-    return <p className="font-mono text-xs text-red-400">{error}</p>
-  }
-
-  const gainers = movers?.gainers ?? []
-  const losers = movers?.losers ?? []
-
-  const MoverRow = ({ item, positive }) => (
-    <div className="flex items-center justify-between rounded border border-terminal-border/60 bg-terminal-bg/50 px-3 py-2">
-      <span className="font-mono text-xs font-semibold text-terminal-text">
-        {item.symbol}
-      </span>
-      <span
-        className={`font-mono text-xs font-medium tabular-nums ${
+        className={`mt-1 font-mono text-sm font-semibold ${
           positive ? 'text-green-400' : 'text-red-400'
         }`}
       >
-        {positive ? '+' : ''}
-        {item.change_pct}%
-      </span>
+        {quote.change_pct != null
+          ? `${positive ? '+' : ''}${quote.change_pct}%`
+          : '—'}
+      </p>
     </div>
   )
+}
 
+function LoadingBlock({ label }) {
   return (
-    <div className="flex flex-1 flex-col gap-4">
-      <div>
-        <p className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-wider text-green-400">
-          Top Gainers
-        </p>
-        <div className="space-y-1.5">
-          {gainers.length > 0 ? (
-            gainers.map((q) => <MoverRow key={q.symbol} item={q} positive />)
-          ) : (
-            <p className="font-mono text-[10px] text-terminal-muted">No gainers</p>
-          )}
-        </div>
-      </div>
-      <div>
-        <p className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-wider text-red-400">
-          Top Losers
-        </p>
-        <div className="space-y-1.5">
-          {losers.length > 0 ? (
-            losers.map((q) => <MoverRow key={q.symbol} item={q} positive={false} />)
-          ) : (
-            <p className="font-mono text-[10px] text-terminal-muted">No losers</p>
-          )}
-        </div>
-      </div>
+    <div className="flex items-center justify-center gap-2 py-12">
+      <Loader2 className="h-6 w-6 animate-spin text-terminal-accent" />
+      <span className="font-mono text-xs text-terminal-muted">{label}</span>
     </div>
   )
 }
 
 export default function Dashboard() {
-  const [query, setQuery] = useState('')
-  const [response, setResponse] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-
   const [quotes, setQuotes] = useState([])
   const [quotesLoading, setQuotesLoading] = useState(true)
-  const [quotesError, setQuotesError] = useState(null)
 
   const [fearGreed, setFearGreed] = useState(null)
   const [fearGreedLoading, setFearGreedLoading] = useState(true)
-  const [fearGreedError, setFearGreedError] = useState(null)
 
   const [movers, setMovers] = useState(null)
   const [moversLoading, setMoversLoading] = useState(true)
-  const [moversError, setMoversError] = useState(null)
 
-  const [heatmap, setHeatmap] = useState([])
-  const [heatmapLoading, setHeatmapLoading] = useState(true)
-
-  const [researchedSymbol, setResearchedSymbol] = useState(null)
-  const [researchPriceData, setResearchPriceData] = useState(null)
+  const [macro, setMacro] = useState(null)
+  const [macroLoading, setMacroLoading] = useState(true)
 
   const loadAllMarketData = useCallback(async () => {
     setQuotesLoading(true)
     setFearGreedLoading(true)
     setMoversLoading(true)
-    setHeatmapLoading(true)
-    setQuotesError(null)
-    setFearGreedError(null)
-    setMoversError(null)
+    setMacroLoading(true)
 
-    try {
-      const quotesData = await safeApiCall(() => getMarketQuotes())
-      if (quotesData) setQuotes(quotesData.quotes ?? [])
+    const quotesData = await safeApiCall(() => getMarketQuotes())
+    if (quotesData) setQuotes(quotesData.quotes ?? [])
 
-      await delay(2000)
+    await delay(2000)
 
-      const fearData = await safeApiCall(() => getFearGreed())
-      if (fearData) setFearGreed(fearData)
+    const fearData = await safeApiCall(() => getFearGreed())
+    if (fearData) setFearGreed(fearData)
 
-      await delay(2000)
+    await delay(2000)
 
-      const moversData = await safeApiCall(() => getTopMovers())
-      if (moversData) setMovers(moversData)
+    const moversData = await safeApiCall(() => getTopMovers())
+    if (moversData) setMovers(moversData)
 
-      await delay(2000)
+    await delay(2000)
 
-      const heatmapData = await safeApiCall(() => getHeatmap())
-      if (heatmapData) setHeatmap(heatmapData)
-    } catch (err) {
-      if (!(err instanceof ApiCooldownError)) {
-        console.error('[AlphaLens] Dashboard market data load failed:', err)
-      }
-    } finally {
-      setQuotesLoading(false)
-      setFearGreedLoading(false)
-      setMoversLoading(false)
-      setHeatmapLoading(false)
-    }
+    const macroData = await safeApiCall(() => getMacroDashboard())
+    if (macroData) setMacro(macroData)
+
+    setQuotesLoading(false)
+    setFearGreedLoading(false)
+    setMoversLoading(false)
+    setMacroLoading(false)
   }, [])
 
   useEffect(() => {
     loadAllMarketData()
-
     const intervalId = setInterval(loadAllMarketData, REFRESH_INTERVAL_5MIN)
     return () => clearInterval(intervalId)
   }, [loadAllMarketData])
 
-  async function handleSendQuery() {
-    const trimmed = query.trim()
-    if (!trimmed || loading) return
+  const watchlistQuotes = useMemo(() => {
+    const map = Object.fromEntries(quotes.map((q) => [q.symbol, q]))
+    return WATCHLIST.map((sym) => map[sym] || { symbol: sym, price: null, change_pct: null })
+  }, [quotes])
 
-    setLoading(true)
-    setError(null)
-    setResponse(null)
-    setResearchedSymbol(null)
-    setResearchPriceData(null)
-
-    try {
-      const data = await sendResearchQuery(trimmed)
-      setResponse(data)
-      
-      // Extract symbol from response if available
-      if (data?.symbol) {
-        setResearchedSymbol(data.symbol)
-      }
-      
-      // Extract price data if available
-      if (data?.dates && data?.prices) {
-        setResearchPriceData({
-          dates: data.dates,
-          prices: data.prices,
-        })
-      }
-    } catch (err) {
-      console.error('[AlphaLens] sendResearchQuery failed:', err)
-      setError(formatApiError(err))
-    } finally {
-      setLoading(false)
-    }
-  }
+  const macroAlerts = useMemo(() => buildMacroAlerts(macro), [macro])
+  const gainers = movers?.gainers ?? []
+  const losers = movers?.losers ?? []
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-end justify-between border-b border-terminal-border pb-4">
-        <div>
-          <p className="mb-1 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-terminal-muted">
-            Command Center
-          </p>
-          <h1 className="font-mono text-2xl font-bold tracking-tight text-white">
-            Dashboard
-          </h1>
-        </div>
-        <p className="hidden font-mono text-xs text-terminal-muted sm:block">
-          INSTITUTIONAL QUANT RESEARCH · LIVE MARKET DATA
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-        <Card
-          title="AI Research Copilot"
-          subtitle="Natural language quant research"
-          accent="AI"
-          className="xl:col-span-7"
-        >
-          <div className="flex flex-1 flex-col gap-4">
-            <div className="flex items-start gap-3 rounded-md border border-terminal-border bg-terminal-bg p-3">
-              <Brain className="mt-0.5 h-5 w-5 shrink-0 text-terminal-accent" />
-              <p className="font-mono text-xs leading-relaxed text-terminal-muted">
-                Ask AlphaLens to analyze regimes, factor exposures, or macro
-                scenarios powered by Groq LLM and live market data.
-              </p>
-            </div>
-            <div className="mt-auto space-y-3">
-              <div className="relative">
-                <textarea
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                      e.preventDefault()
-                      handleSendQuery()
-                    }
-                  }}
-                  placeholder="e.g. Run a momentum factor backtest on US large-cap vs. current macro regime..."
-                  rows={3}
-                  disabled={loading}
-                  className="w-full resize-none rounded-md border border-terminal-border bg-terminal-bg px-4 py-2.5 pr-12 font-mono text-sm text-terminal-text outline-none transition-colors placeholder:text-terminal-muted/60 focus:border-terminal-accent/50 focus:ring-1 focus:ring-terminal-accent/20 disabled:opacity-60"
-                />
-                <button
-                  type="button"
-                  onClick={handleSendQuery}
-                  disabled={loading || !query.trim()}
-                  className="absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-md border border-terminal-accent/40 bg-terminal-accent/10 text-terminal-accent transition-colors hover:bg-terminal-accent/20 disabled:cursor-not-allowed disabled:opacity-40"
-                  aria-label="Send query"
-                >
-                  <Send size={14} />
-                </button>
-              </div>
-
-              {loading && (
-                <p className="animate-pulse font-mono text-xs font-medium text-terminal-accent">
-                  AlphaLens is thinking...
-                </p>
-              )}
-
-              {error && !loading && (
-                <div className="rounded-md border border-red-500/30 bg-red-500/10 p-4">
-                  <p className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-wider text-red-400">
-                    Request Error
-                  </p>
-                  <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-red-400">
-                    {error}
-                  </pre>
-                </div>
-              )}
-
-              {response && !loading && (
-                <div className="rounded-md border border-terminal-border bg-terminal-bg p-4">
-                  <p className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-wider text-terminal-accent">
-                    Research Response
-                  </p>
-                  <pre className="overflow-x-auto font-mono text-xs leading-relaxed text-terminal-text/90">
-                    {JSON.stringify(response, null, 2)}
-                  </pre>
-                </div>
-              )}
-
-              {researchedSymbol && (
-                <div className="rounded-md border border-terminal-border bg-terminal-bg p-4">
-                  <p className="mb-3 font-mono text-[10px] font-semibold uppercase tracking-wider text-terminal-accent">
-                    Price Chart
-                  </p>
-                  <PriceChart symbol={researchedSymbol} period="1y" />
-                </div>
-              )}
-
-              {researchPriceData && researchedSymbol && (
-                <div className="rounded-md border border-terminal-border bg-terminal-bg p-4">
-                  <p className="mb-3 font-mono text-[10px] font-semibold uppercase tracking-wider text-terminal-accent">
-                    Research Chart
-                  </p>
-                  <ResearchChart
-                    dates={researchPriceData.dates}
-                    prices={researchPriceData.prices}
-                    symbol={researchedSymbol}
-                  />
-                </div>
-              )}
-            </div>
+    <div className="space-y-6 pb-24">
+      <FadeCard index={0}>
+        <div className="flex flex-wrap items-end justify-between gap-4 border-b border-terminal-border pb-4">
+          <div>
+            <p className="mb-1 flex items-center gap-2 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-terminal-muted">
+              <Radio className="h-3 w-3 text-terminal-accent live-indicator-pulse" />
+              Command Center
+            </p>
+            <h1 className="font-mono text-2xl font-bold tracking-tight text-terminal-text">
+              Dashboard
+            </h1>
           </div>
-        </Card>
+          <p className="font-mono text-xs text-terminal-muted">
+            INSTITUTIONAL QUANT RESEARCH · LIVE MARKET DATA
+          </p>
+        </div>
+      </FadeCard>
 
+      {/* Row 1: Market Overview */}
+      <FadeCard index={1}>
         <Card
           title="Market Overview"
-          subtitle="Cross-asset snapshot"
-          className="xl:col-span-5"
+          subtitle="Live watchlist"
+          className="dashboard-card"
         >
           <div className="mb-3 flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-terminal-accent" />
             <span className="font-mono text-[10px] text-terminal-muted">
-              MAJOR INDICES · FX · CRYPTO
+              SPY · QQQ · BTC · GLD · NVDA · TSLA
             </span>
           </div>
-          <HeatmapChart data={heatmap} loading={heatmapLoading} disablePolling />
+          {quotesLoading ? (
+            <LoadingBlock label="Fetching live quotes..." />
+          ) : (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              {watchlistQuotes.map((q) => (
+                <QuoteCard key={q.symbol} quote={q} />
+              ))}
+            </div>
+          )}
         </Card>
+      </FadeCard>
 
-        <Card
-          title="Fear & Greed Index"
-          subtitle="Sentiment gauge"
-          className="xl:col-span-4"
-        >
-          <div className="mb-2 flex items-center gap-2">
-            <Gauge className="h-4 w-4 text-terminal-accent" />
-          </div>
-          <FearGreedGauge data={fearGreed} loading={fearGreedLoading} disablePolling />
-        </Card>
+      {/* Row 2: Fear & Greed + Movers */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <FadeCard index={2}>
+          <Card title="Fear & Greed Index" subtitle="Market sentiment" className="dashboard-card h-full">
+            <Gauge className="mb-2 h-4 w-4 text-terminal-accent" />
+            <FearGreedGauge data={fearGreed} loading={fearGreedLoading} disablePolling />
+          </Card>
+        </FadeCard>
 
-        <Card
-          title="Top Movers"
-          subtitle="Gainers & losers"
-          className="xl:col-span-4"
-        >
-          <div className="mb-3 flex items-center gap-2">
-            <ArrowUpDown className="h-4 w-4 text-terminal-accent" />
-          </div>
-          <TopMoversContent
-            movers={movers}
-            loading={moversLoading}
-            error={moversError}
-          />
-        </Card>
+        <FadeCard index={3}>
+          <Card title="Top Gainers & Losers" subtitle="Today's movers" className="dashboard-card h-full">
+            <ArrowUpDown className="mb-3 h-4 w-4 text-terminal-accent" />
+            {moversLoading ? (
+              <LoadingBlock label="Scanning movers..." />
+            ) : (
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div>
+                  <p className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-wider text-green-400">
+                    Top Gainers
+                  </p>
+                  <div className="space-y-2">
+                    {gainers.length > 0 ? (
+                      gainers.map((item) => (
+                        <div
+                          key={item.symbol}
+                          className="flex justify-between rounded border border-terminal-border/60 bg-terminal-bg/50 px-3 py-2"
+                        >
+                          <span className="font-mono text-xs font-semibold">{item.symbol}</span>
+                          <span className="font-mono text-xs text-green-400">
+                            +{item.change_pct}%
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="font-mono text-[10px] text-terminal-muted">No gainers</p>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <p className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-wider text-red-400">
+                    Top Losers
+                  </p>
+                  <div className="space-y-2">
+                    {losers.length > 0 ? (
+                      losers.map((item) => (
+                        <div
+                          key={item.symbol}
+                          className="flex justify-between rounded border border-terminal-border/60 bg-terminal-bg/50 px-3 py-2"
+                        >
+                          <span className="font-mono text-xs font-semibold">{item.symbol}</span>
+                          <span className="font-mono text-xs text-red-400">{item.change_pct}%</span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="font-mono text-[10px] text-terminal-muted">No losers</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </Card>
+        </FadeCard>
+      </div>
 
-        <Card
-          title="Macro Alerts"
-          subtitle="Fed · CPI · yields"
-          className="xl:col-span-4"
-        >
-          <div className="mb-3 flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-amber-400" />
-            <span className="font-mono text-[10px] text-terminal-muted">
-              EVENT CALENDAR
-            </span>
-          </div>
-          <PlaceholderBlock label="Macro event feed — coming soon" rows={5} />
-        </Card>
+      {/* Row 3: Macro Alerts + Calendar */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <FadeCard index={4}>
+          <Card title="Macro Alerts" subtitle="Fed · CPI · yields" className="dashboard-card h-full">
+            <AlertTriangle className="mb-3 h-4 w-4 text-amber-400" />
+            {macroLoading ? (
+              <LoadingBlock label="Loading macro intelligence..." />
+            ) : macroAlerts.length > 0 ? (
+              <div className="space-y-3">
+                {macroAlerts.map((alert, i) => (
+                  <div
+                    key={i}
+                    className={`border-l-4 bg-terminal-bg/50 py-2.5 pl-3 pr-2 font-mono text-xs leading-relaxed text-terminal-text ${borderByType[alert.type]}`}
+                  >
+                    {alert.text}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="font-mono text-xs text-terminal-muted">
+                No active macro alerts. Conditions within normal ranges.
+              </p>
+            )}
+          </Card>
+        </FadeCard>
 
+        <FadeCard index={5}>
+          <Card title="Event Calendar" subtitle="Upcoming releases" className="dashboard-card h-full">
+            <Calendar className="mb-3 h-4 w-4 text-terminal-accent" />
+            <div className="space-y-2">
+              {UPCOMING_EVENTS.map((event) => (
+                <div
+                  key={event.name}
+                  className="flex items-center justify-between rounded border border-terminal-border/60 bg-terminal-bg/50 px-3 py-2.5"
+                >
+                  <span className="font-mono text-xs text-terminal-text">{event.name}</span>
+                  <span className="font-mono text-[10px] text-terminal-muted">{event.date}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </FadeCard>
+      </div>
+
+      {/* Row 4: Research Reports */}
+      <FadeCard index={6}>
         <Card
           title="Latest Research Reports"
           subtitle="Institutional PDF outputs"
-          className="xl:col-span-12"
+          className="dashboard-card"
         >
-          <div className="mb-4 flex items-center gap-2">
-            <FileText className="h-4 w-4 text-terminal-accent" />
-          </div>
+          <FileText className="mb-4 h-4 w-4 text-terminal-accent" />
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {[1, 2, 3, 4].map((n) => (
+            {SAMPLE_REPORTS.map((report) => (
               <div
-                key={n}
-                className="rounded-md border border-terminal-border bg-terminal-bg p-4 transition-colors hover:border-terminal-accent/20"
+                key={report.title}
+                className="dashboard-card rounded-lg border border-terminal-border bg-terminal-bg p-4"
               >
-                <div className="mb-3 h-1 w-8 rounded bg-terminal-accent/40" />
-                <div className="mb-2 h-3 w-3/4 rounded bg-terminal-border" />
-                <div className="mb-4 h-2 w-1/2 rounded bg-terminal-border/70" />
-                <div className="h-2 w-full rounded bg-terminal-border/50" />
-                <p className="mt-4 font-mono text-[10px] text-terminal-muted">
-                  REPORT SLOT {n}
-                </p>
+                <span className="rounded border border-terminal-accent/20 bg-terminal-accent/5 px-2 py-0.5 font-mono text-[9px] text-terminal-accent">
+                  {report.tag}
+                </span>
+                <h4 className="mt-3 font-mono text-sm font-semibold text-terminal-text">
+                  {report.title}
+                </h4>
+                <p className="mt-2 font-mono text-[10px] text-terminal-muted">{report.date}</p>
+                <div className="mt-4 h-1 w-8 rounded bg-terminal-accent/40" />
               </div>
             ))}
           </div>
         </Card>
-      </div>
+      </FadeCard>
+
+      <AiCopilot />
     </div>
   )
 }
+

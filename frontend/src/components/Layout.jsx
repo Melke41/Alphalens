@@ -1,12 +1,17 @@
 import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Navbar from './Navbar'
+import { useApp } from '../context/AppContext'
 
 export default function Layout() {
+  const { sidebarCollapsed } = useApp()
+
   return (
-    <div className="min-h-screen bg-terminal-bg">
+    <div className="min-h-screen bg-terminal-bg" data-theme-root>
       <Sidebar />
-      <div className="pl-56">
+      <div
+        className={`main-transition ${sidebarCollapsed ? 'pl-16' : 'pl-56'}`}
+      >
         <Navbar />
         <main className="min-h-[calc(100vh-3.5rem)] p-6">
           <Outlet />
