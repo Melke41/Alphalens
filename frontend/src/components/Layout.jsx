@@ -7,7 +7,8 @@ export default function Layout() {
   const { sidebarCollapsed, theme } = useApp()
 
   return (
-    <div className={`${theme === 'light' ? 'light' : 'dark'} min-h-screen bg-terminal-bg`} data-theme-root>
+    // set the data-theme attribute on the outermost element so all children inherit
+    <div data-theme={theme} className="min-h-screen bg-terminal-bg">
       <Sidebar />
       <div
         className={`main-transition ${sidebarCollapsed ? 'pl-16' : 'pl-56'}`}
