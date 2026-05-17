@@ -98,3 +98,19 @@ body {
 .main-transition {
   transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* Theme utility classes (use these instead of hard-coded colors) */
+.bg-terminal-bg { background-color: var(--terminal-bg) !important; }
+.bg-terminal-surface { background-color: var(--terminal-surface) !important; }
+.bg-terminal-elevated { background-color: var(--terminal-elevated) !important; }
+.text-terminal-text { color: var(--terminal-text) !important; }
+.text-terminal-muted { color: var(--terminal-muted) !important; }
+.border-terminal-border { border-color: var(--terminal-border) !important; }
+
+/* Light-mode overrides for legacy literal Tailwind arbitrary classes (temporary)
+   These help when components still use bg-[#0a0a0a] / bg-[#111827] / text-white / border-[#1f2937]
+   They will be removed once all components are converted to the theme utilities above. */
+[data-theme='light'] .bg-\[\#0a0a0a\] { background-color: #f9fafb !important; }
+[data-theme='light'] .bg-\[\#111827\] { background-color: #f3f4f6 !important; }
+[data-theme='light'] .text-white { color: #111827 !important; }
+[data-theme='light'] .border-\[\#1f2937\] { border-color: #e5e7eb !important; }
