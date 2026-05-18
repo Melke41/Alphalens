@@ -13,6 +13,27 @@ load_dotenv(dotenv_path=env_path)
 FRED_API_KEY = os.getenv("FRED_API_KEY")
 
 def fetch_market_data(symbol: str, period: str = "1y") -> dict:
+    symbol_map = {
+        "XAUUSD": "GC=F",
+        "GOLD": "GC=F", 
+        "SILVER": "SI=F",
+        "XAGUSD": "SI=F",
+        "OIL": "CL=F",
+        "WTIUSD": "CL=F",
+        "EURUSD": "EURUSD=X",
+        "GBPUSD": "GBPUSD=X",
+        "USDJPY": "JPY=X",
+        "BTCUSD": "BTC-USD",
+        "ETHUSD": "ETH-USD",
+        "ETB": "ETBUSD=X",
+        "SP500": "SPY",
+        "NASDAQ": "QQQ",
+        "DOW": "DIA",
+        "NIFTY": "^NSEI",
+        "FTSE": "^FTSE",
+        "DAX": "^GDAXI",
+    }
+    symbol = symbol_map.get(symbol.upper(), symbol)
     try:
         ticker = yf.Ticker(symbol)
         hist = ticker.history(period=period)
