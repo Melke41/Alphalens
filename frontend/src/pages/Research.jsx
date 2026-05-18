@@ -8,7 +8,7 @@ const MAX_REPORTS = 20
 function StatRow({ label, value }) {
   return (
     <div className="flex justify-between items-start py-2 border-b border-terminal-border last:border-0">
-      <span className="text-xs text-[#6b7280] uppercase tracking-wide">{label}</span>
+      <span className="text-xs text-terminal-muted uppercase tracking-wide">{label}</span>
       <span className="text-sm text-terminal-text font-mono text-right max-w-[60%]">{value ?? '—'}</span>
     </div>
   )
@@ -18,8 +18,8 @@ function MetricTile({ label, value, suffix = '', prefix = '' }) {
   const display =
     value === null || value === undefined ? '—' : `${prefix}${value}${suffix}`
   return (
-    <div className="bg-terminal-bg border border-terminal-border rounded-lg p-4">
-      <span className="text-xs text-[#6b7280] font-mono uppercase tracking-wide block mb-2">
+    <div className="bg-terminal-surface border border-terminal-border rounded-lg p-4">
+      <span className="text-xs text-terminal-muted font-mono uppercase tracking-wide block mb-2">
         {label}
       </span>
       <span className="text-xl font-bold font-mono text-terminal-text">{display}</span>
@@ -44,7 +44,7 @@ function saveReportToLibrary(data) {
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       category: analysisType,
       symbol: symbol,
-      data: data
+      data: data,
     }
     const updated = [newReport, ...existing].slice(0, MAX_REPORTS)
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
@@ -121,23 +121,23 @@ export default function Research() {
     <div className="min-h-screen bg-terminal-bg text-terminal-text p-6 md:p-10 font-mono">
       <header className="mb-10">
         <h1 className="text-4xl font-bold text-terminal-text mb-2">AI Research Copilot</h1>
-        <p className="text-[#6b7280] text-lg">Natural Language Quantitative Research</p>
+        <p className="text-terminal-muted text-lg">Natural Language Quantitative Research</p>
       </header>
 
       <section className="bg-terminal-surface border border-terminal-border rounded-xl p-6 mb-8">
-        <label className="block text-sm text-[#6b7280] mb-3">Research Question</label>
+        <label className="block text-sm text-terminal-muted mb-3">Research Question</label>
         <textarea
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="e.g. Does Bitcoin drop after Federal Reserve rate hikes?"
           rows={5}
-          className="w-full bg-terminal-bg border border-terminal-border rounded-lg px-4 py-3 text-terminal-text placeholder-[#6b7280] focus:outline-none focus:border-[#3b82f6] font-mono resize-y min-h-[120px] mb-6"
+          className="w-full bg-terminal-bg border border-terminal-border rounded-lg px-4 py-3 text-terminal-text placeholder-terminal-muted focus:outline-none focus:border-terminal-accent font-mono resize-y min-h-[120px]"
         />
         <button
           type="button"
           onClick={runResearch}
           disabled={loading}
-          className="px-8 py-3 bg-[#3b82f6] hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-semibold text-terminal-text transition-colors"
+          className="mt-4 px-8 py-3 bg-terminal-accent hover:bg-terminal-accent/80 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-semibold text-white transition-colors"
         >
           Run Research
         </button>
@@ -145,10 +145,10 @@ export default function Research() {
       </section>
 
       {loading && (
-        <div className="flex items-center gap-3 text-[#6b7280] mb-8">
+        <div className="flex items-center gap-3 text-terminal-muted mb-8">
           <span className="relative flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#3b82f6] opacity-75" />
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-[#3b82f6]" />
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-terminal-accent opacity-75" />
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-terminal-accent" />
           </span>
           <span className="text-sm">AlphaLens is thinking...</span>
         </div>
@@ -158,7 +158,7 @@ export default function Research() {
         <div className="space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <section className="bg-terminal-surface border border-terminal-border rounded-xl p-6">
-              <h2 className="text-lg font-semibold text-[#3b82f6] mb-4">Query Analysis</h2>
+              <h2 className="text-lg font-semibold text-terminal-accent mb-4">Query Analysis</h2>
               <StatRow label="Asset" value={qa?.asset} />
               <StatRow label="Timeframe" value={qa?.timeframe?.toUpperCase()} />
               <StatRow label="Analysis Type" value={qa?.analysis_type?.toUpperCase()} />
@@ -167,7 +167,7 @@ export default function Research() {
             </section>
 
             <section className="bg-terminal-surface border border-terminal-border rounded-xl p-6">
-              <h2 className="text-lg font-semibold text-[#3b82f6] mb-4">Market Stats</h2>
+              <h2 className="text-lg font-semibold text-terminal-accent mb-4">Market Stats</h2>
               {stats ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <MetricTile label="Latest Price" value={stats.latest_price} prefix="$" />
@@ -193,14 +193,14 @@ export default function Research() {
                   />
                 </div>
               ) : (
-                <p className="text-sm text-[#6b7280]">Market data unavailable for this asset.</p>
+                <p className="text-sm text-terminal-muted">Market data unavailable for this asset.</p>
               )}
             </section>
           </div>
 
-          <section className="bg-terminal-surface border border-terminal-border border-l-4 border-l-[#3b82f6] rounded-xl p-6">
+          <section className="bg-terminal-surface border border-terminal-border border-l-4 border-l-terminal-accent rounded-xl p-6">
             <h2 className="text-lg font-semibold text-terminal-text mb-4">AI Research Narrative</h2>
-            <p className="text-sm text-[#d1d5db] leading-relaxed whitespace-pre-wrap">
+            <p className="text-sm text-terminal-text leading-relaxed whitespace-pre-wrap">
               {results.narrative || 'No narrative available.'}
             </p>
           </section>
@@ -209,7 +209,7 @@ export default function Research() {
             type="button"
             onClick={downloadPdf}
             disabled={pdfLoading}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#3b82f6] hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-semibold text-terminal-text transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-terminal-accent hover:bg-terminal-accent/80 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-semibold text-white transition-colors"
           >
             <Download className="h-4 w-4" />
             {pdfLoading ? 'Generating PDF...' : 'Download PDF Report'}
@@ -219,7 +219,7 @@ export default function Research() {
 
       {/* Toast Notification */}
       {saveToast && (
-        <div className="fixed bottom-6 right-6 bg-[#3b82f6] text-terminal-text px-6 py-3 rounded-lg font-mono text-sm shadow-lg z-50 flex items-center gap-2">
+        <div className="fixed bottom-6 right-6 bg-terminal-accent text-white px-6 py-3 rounded-lg font-mono text-sm shadow-lg z-50 flex items-center gap-2">
           <span>✅</span>
           <span>Report saved to your library</span>
         </div>
