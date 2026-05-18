@@ -14,12 +14,12 @@ import { useApp } from '../context/AppContext'
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/research', label: 'Research', icon: Brain },
-  { to: '/markets', label: 'Markets', icon: LineChart },
   { to: '/market-intelligence', label: 'Market Intelligence', icon: Radio },
+  { to: '/markets', label: 'Markets', icon: LineChart },
   { to: '/quant', label: 'Quant Tools', icon: Calculator },
   { to: '/macro', label: 'Macro & Fed', icon: Globe2 },
   { to: '/african', label: 'African Markets', emoji: '🌍' },
+  { to: '/research', label: 'Research', icon: Brain },
   { to: '/reports', label: 'Reports', icon: FileText },
 ]
 
