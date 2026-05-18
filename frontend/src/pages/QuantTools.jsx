@@ -6,9 +6,9 @@ function MetricCard({ name, value, subtext, good }) {
   const valueColor = good === true ? 'text-green-400' : good === false ? 'text-red-400' : 'text-terminal-text';
   return (
     <div className="bg-terminal-surface border border-terminal-border rounded-lg p-4 flex flex-col">
-      <span className="text-xs text-[#6b7280] font-mono uppercase tracking-wide mb-2">{name}</span>
+      <span className="text-xs text-terminal-muted font-mono uppercase tracking-wide mb-2">{name}</span>
       <span className={`text-2xl font-bold font-mono ${valueColor}`}>{value ?? '—'}</span>
-      {subtext && <span className="text-xs text-[#6b7280] mt-1">{subtext}</span>}
+      {subtext && <span className="text-xs text-terminal-muted mt-1">{subtext}</span>}
     </div>
   );
 }
@@ -57,7 +57,7 @@ export default function QuantTools() {
       {/* Header */}
       <header className="mb-10">
         <h1 className="text-4xl font-bold text-terminal-text mb-2">Quant Tools</h1>
-        <p className="text-[#6b7280] text-lg">Institutional-Grade Risk & Performance Analytics</p>
+        <p className="text-terminal-muted text-lg">Institutional-Grade Risk & Performance Analytics</p>
       </header>
 
       {/* Asset Analyzer */}
@@ -65,29 +65,29 @@ export default function QuantTools() {
         <h2 className="text-xl font-semibold text-terminal-text mb-6">Asset Analyzer</h2>
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="flex-1">
-            <label className="block text-sm text-[#6b7280] mb-2">Primary Symbol</label>
+            <label className="block text-sm text-terminal-muted mb-2">Primary Symbol</label>
             <input
               type="text"
               value={primarySymbol}
               onChange={(e) => setPrimarySymbol(e.target.value.toUpperCase())}
               placeholder="AAPL"
-              className="w-full bg-terminal-bg border border-terminal-border rounded-lg px-4 py-3 text-terminal-text placeholder-[#6b7280] focus:outline-none focus:border-[#3b82f6] font-mono"
+              className="w-full bg-terminal-bg border border-terminal-border rounded-lg px-4 py-3 text-terminal-text placeholder-terminal-muted focus:outline-none focus:border-terminal-accent font-mono"
             />
           </div>
           <div className="flex-1">
-            <label className="block text-sm text-[#6b7280] mb-2">Benchmark Symbol</label>
+            <label className="block text-sm text-terminal-muted mb-2">Benchmark Symbol</label>
             <input
               type="text"
               value={benchmarkSymbol}
               onChange={(e) => setBenchmarkSymbol(e.target.value.toUpperCase())}
               placeholder="SPY"
-              className="w-full bg-terminal-bg border border-terminal-border rounded-lg px-4 py-3 text-terminal-text placeholder-[#6b7280] focus:outline-none focus:border-[#3b82f6] font-mono"
+              className="w-full bg-terminal-bg border border-terminal-border rounded-lg px-4 py-3 text-terminal-text placeholder-terminal-muted focus:outline-none focus:border-terminal-accent font-mono"
             />
           </div>
         </div>
 
         <div className="mb-6">
-          <label className="block text-sm text-[#6b7280] mb-2">Analysis Period</label>
+          <label className="block text-sm text-terminal-muted mb-2">Analysis Period</label>
           <div className="flex flex-wrap gap-2">
             {PERIODS.map((p) => (
               <button
@@ -95,8 +95,8 @@ export default function QuantTools() {
                 onClick={() => setSelectedPeriod(p)}
                 className={`px-4 py-2 rounded-lg font-mono text-sm transition-colors ${
                   selectedPeriod === p
-                    ? 'bg-[#3b82f6] text-terminal-text'
-                    : 'bg-terminal-bg border border-terminal-border text-[#6b7280] hover:border-[#3b82f6] hover:text-terminal-text'
+                    ? 'bg-terminal-accent text-terminal-text'
+                    : 'bg-terminal-bg border border-terminal-border text-terminal-muted hover:border-terminal-accent hover:text-terminal-text'
                 }`}
               >
                 {p}
@@ -108,7 +108,7 @@ export default function QuantTools() {
         <button
           onClick={runAnalysis}
           disabled={loading}
-          className="w-full md:w-auto px-8 py-3 bg-[#3b82f6] hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-semibold text-terminal-text transition-colors"
+          className="w-full md:w-auto px-8 py-3 bg-terminal-accent hover:bg-terminal-accent/80 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-semibold text-white transition-colors"
         >
           {loading ? 'Running institutional analysis...' : 'Run Analysis'}
         </button>
@@ -124,7 +124,7 @@ export default function QuantTools() {
             <MetricCard name="Latest Price" value={`$${fmt(results.latest_price)}`} />
             <MetricCard name="Total Return" value={fmt(results.total_return, '%')} good={results.total_return > 0} />
             <MetricCard name="Volatility" value={fmt(results.volatility * 100, '%')} good={results.volatility < 0.2} />
-            <MetricCard name="Sharpe Ratio" value={fmt(results.sharpe_ratio, '', 3)} good={results.sharpe_ratio > 1} subtext={results.sharpe_ratio > 2 ? 'Excellent' : results.sharpe_ratio > 1 ? 'Good' : 'Average'} />
+            <MetricCard name="Sharpe Ratio" value={fmt(results.sharpe_ratio, '', 3)} good={results.sharpe_ratio > 1} subtext={results.sharpe_ratio > 2 ? 'Excellent' : results.sharpe_ratio > 1 ? 'Good' : ''} />
             <MetricCard name="Sortino Ratio" value={fmt(results.sortino_ratio, '', 3)} good={results.sortino_ratio > 1} />
             <MetricCard name="Max Drawdown" value={fmt(results.max_drawdown * 100, '%')} good={results.max_drawdown > -0.2} />
             <MetricCard name="VaR 95%" value={fmt(results.var_95 * 100, '%')} />
@@ -147,7 +147,7 @@ export default function QuantTools() {
       {results && results.zscore && (
         <section className="bg-terminal-surface border border-terminal-border rounded-xl p-6">
           <h2 className="text-xl font-semibold text-terminal-text mb-2">Price Anomaly Detection</h2>
-          <p className="text-[#6b7280] text-sm mb-6">Z-Score — signals above +2 or below -2 indicate anomalies</p>
+          <p className="text-terminal-muted text-sm mb-6">Z-Score — signals above +2 or below -2 indicate anomalies</p>
           <div className="w-full overflow-x-auto">
             <div className="h-64 flex items-end gap-px">
               {results.zscore.slice(-100).map((z, i) => (
@@ -163,7 +163,7 @@ export default function QuantTools() {
                 />
               ))}
             </div>
-            <div className="flex justify-between text-xs text-[#6b7280] mt-2">
+            <div className="flex justify-between text-xs text-terminal-muted mt-2">
               <span>100 days ago</span>
               <span className="text-red-400">Red = Overbought (&gt;+2σ)</span>
               <span className="text-blue-400">Blue = Oversold (&lt;-2σ)</span>
@@ -177,7 +177,7 @@ export default function QuantTools() {
         <section className="bg-terminal-surface border border-terminal-border rounded-xl p-6">
           <h2 className="text-xl font-semibold text-terminal-text mb-2">Z-Score Anomaly Detection</h2>
           <div className="h-64 flex items-center justify-center border border-terminal-border rounded-lg bg-terminal-bg">
-            <p className="text-[#6b7280]">Run analysis to see anomaly detection chart</p>
+            <p className="text-terminal-muted">Run analysis to see anomaly detection chart</p>
           </div>
         </section>
       )}
