@@ -10,6 +10,7 @@
   --terminal-border: #1f1f1f;
   --terminal-text: #e5e5e5;
   --terminal-muted: #6b7280;
+  --terminal-accent: #3b82f6;
 }
 
 [data-theme='light'] {
@@ -19,6 +20,7 @@
   --terminal-border: #e2e8f0;
   --terminal-text: #0f172a;
   --terminal-muted: #64748b;
+  --terminal-accent: #2563eb;
 }
 
 body {
@@ -106,6 +108,8 @@ body {
 .text-terminal-text { color: var(--terminal-text) !important; }
 .text-terminal-muted { color: var(--terminal-muted) !important; }
 .border-terminal-border { border-color: var(--terminal-border) !important; }
+.bg-terminal-accent { background-color: var(--terminal-accent) !important; }
+.text-terminal-accent { color: var(--terminal-accent) !important; }
 
 /* Light-mode overrides for legacy literal Tailwind arbitrary classes (temporary)
    These help when components still use bg-[#0a0a0a] / bg-[#111827] / text-white / border-[#1f2937]
