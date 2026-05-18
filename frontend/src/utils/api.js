@@ -104,4 +104,13 @@ export const getMarketNews = async () => {
   return response.data;
 };
 
+// Keep backend alive - ping every 10 minutes
+setInterval(async () => {
+  try {
+    await api.get('/health')
+  } catch (e) {
+    // silent fail
+  }
+}, 600000)
+
 export default api;
