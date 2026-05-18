@@ -185,7 +185,7 @@ export default function Markets() {
                 value={searchSymbol}
                 onChange={(e) => setSearchSymbol(e.target.value)}
                 placeholder="e.g. AAPL, BTC-USD, GLD..."
-                className="w-full rounded-md border border-terminal-border bg-terminal-bg px-10 py-2.5 font-mono text-sm text-terminal-text outline-none transition-colors placeholder:text-terminal-muted/60 focus:border-terminal-accent/50 focus:ring-1 focus:ring-terminal-accent/20"
+                className="w-full rounded-md border border-terminal-border bg-terminal-bg px-10 py-2.5 font-mono text-sm text-terminal-text outline-none transition-colors placeholder:text-terminal-muted"
               />
             </div>
             <button
