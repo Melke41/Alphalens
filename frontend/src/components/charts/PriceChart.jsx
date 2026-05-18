@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Plot from 'react-plotly.js'
 import api, { safeApiCall } from '../../utils/api'
 import { ApiCooldownError } from '../../utils/apiCooldown'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Maximize2, Minimize2, Plus, Minus, RotateCcw } from 'lucide-react'
 
 function formatVolume(vol) {
   if (!vol) return '0'
@@ -17,9 +17,50 @@ export default function PriceChart({ symbol, period = '1y', height = 500 }) {
   const [error, setError] = useState(null)
   const [selectedPeriod, setSelectedPeriod] = useState(period)
   const [chartType, setChartType] = useState('candlestick')
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [showCrosshair, setShowCrosshair] = useState(true)
+  const plotRef = useRef(null)
 
   const periods = ['1D', '5D', '1M', '3M', '6M', '1Y', '2Y', '5Y']
   const chartTypes = ['Candles', 'Line', 'Area']
+
+  // Zoom functions
+  const handleZoomIn = () => {
+    if (!plotRef.current) return
+    const currentLayout = plotRef.current.layout
+    const xaxis = currentLayout.xaxis || {}
+    const currentRange = xaxis.range || [data.dates[0], data.dates[data.dates.length - 1]]
+    
+    const rangeSize = new Date(currentRange[1]) - new Date(currentRange[0])
+    const newRangeSize = rangeSize * 0.8
+    const center = new Date(currentRange[0]) + rangeSize / 2
+    
+    const newStart = new Date(center - newRangeSize / 2).toISOString().split('T')[0]
+    const newEnd = new Date(center + newRangeSize / 2).toISOString().split('T')[0]
+    
+    plotRef.current.relayout({ 'xaxis.range': [newStart, newEnd] })
+  }
+
+  const handleZoomOut = () => {
+    if (!plotRef.current) return
+    const currentLayout = plotRef.current.layout
+    const xaxis = currentLayout.xaxis || {}
+    const currentRange = xaxis.range || [data.dates[0], data.dates[data.dates.length - 1]]
+    
+    const rangeSize = new Date(currentRange[1]) - new Date(currentRange[0])
+    const newRangeSize = rangeSize * 1.2
+    const center = new Date(currentRange[0]) + rangeSize / 2
+    
+    const newStart = new Date(center - newRangeSize / 2).toISOString().split('T')[0]
+    const newEnd = new Date(center + newRangeSize / 2).toISOString().split('T')[0]
+    
+    plotRef.current.relayout({ 'xaxis.range': [newStart, newEnd] })
+  }
+
+  const handleResetZoom = () => {
+    if (!plotRef.current) return
+    plotRef.current.relayout({ 'xaxis.range': [data.dates[0], data.dates[data.dates.length - 1]] })
+  }
 
   useEffect(() => {
     setSelectedPeriod(period)
@@ -159,7 +200,7 @@ export default function PriceChart({ symbol, period = '1y', height = 500 }) {
       gridcolor: '#1f2937',
       showgrid: true,
       zeroline: false,
-      showspikes: true,
+      showspikes: showCrosshair,
       spikemode: 'across',
       spikesnap: 'cursor',
       spikethickness: 1,
@@ -172,7 +213,7 @@ export default function PriceChart({ symbol, period = '1y', height = 500 }) {
       gridcolor: '#1f2937',
       showgrid: true,
       zeroline: false,
-      showspikes: true,
+      showspikes: showCrosshair,
       spikemode: 'across',
       spikesnap: 'cursor',
       spikethickness: 1,
@@ -208,7 +249,7 @@ export default function PriceChart({ symbol, period = '1y', height = 500 }) {
   }
 
   return (
-    <div className="w-full">
+    <div className={`w-full ${isFullscreen ? 'fixed inset-0 z-50 bg-terminal-bg' : ''}`}>
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b border-terminal-border bg-terminal-bg px-4 py-3">
         <div className="flex items-center gap-4">
@@ -255,14 +296,56 @@ export default function PriceChart({ symbol, period = '1y', height = 500 }) {
               </button>
             ))}
           </div>
+          {/* Zoom controls */}
+          <div className="ml-4 flex gap-1 border-l border-terminal-border pl-4">
+            <button
+              onClick={handleZoomIn}
+              className="p-1.5 rounded hover:bg-terminal-border text-terminal-muted hover:text-terminal-text transition-colors"
+              title="Zoom In">
+              <Plus size={16} />
+            </button>
+            <button
+              onClick={handleZoomOut}
+              className="p-1.5 rounded hover:bg-terminal-border text-terminal-muted hover:text-terminal-text transition-colors"
+              title="Zoom Out">
+              <Minus size={16} />
+            </button>
+            <button
+              onClick={handleResetZoom}
+              className="p-1.5 rounded hover:bg-terminal-border text-terminal-muted hover:text-terminal-text transition-colors"
+              title="Reset Zoom">
+              <RotateCcw size={16} />
+            </button>
+          </div>
+          {/* Crosshair toggle */}
+          <div className="ml-4 flex gap-1 border-l border-terminal-border pl-4">
+            <button
+              onClick={() => setShowCrosshair(!showCrosshair)}
+              className={`px-2.5 py-1 font-mono text-xs font-medium transition-colors ${
+                showCrosshair
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-terminal-bg text-terminal-muted hover:bg-terminal-border'
+              }`}
+              title="Toggle Crosshair">
+              Crosshair
+            </button>
+          </div>
+          {/* Fullscreen button */}
+          <button
+            onClick={() => setIsFullscreen(!isFullscreen)}
+            className="ml-4 p-1.5 rounded hover:bg-terminal-border text-terminal-muted hover:text-terminal-text transition-colors"
+            title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}>
+            {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+          </button>
         </div>
       </div>
       {/* Chart */}
       <Plot
+        ref={plotRef}
         data={traces}
         layout={layout}
         config={config}
-        style={{ width: '100%', height: `${height}px` }}
+        style={{ width: '100%', height: isFullscreen ? '90vh' : `${height}px` }}
         useResizeHandler
       />
     </div>
